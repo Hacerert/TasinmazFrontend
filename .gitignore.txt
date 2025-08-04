@@ -1,0 +1,19 @@
+# Angular derleme ve önbellek klasörleri
+/dist
+/tmp
+/out-tsc
+.angular/
+
+# Node.js bağımlılıkları
+/node_modules
+npm-debug.log
+yarn-error.log
+
+# IDE ve düzenleyici dosyaları
+.idea/
+.vscode/
+*.sublime-workspace
+
+# İşletim sistemi ve sistem dosyaları
+.DS_Store
+Thumbs.db
