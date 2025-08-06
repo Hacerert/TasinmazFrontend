@@ -61,10 +61,10 @@ export class UserAddComponent implements OnInit {
     this.error = null;
 
     const userData = {
-      username: this.userForm.value.username,
-      email: this.userForm.value.email,
-      role: this.userForm.value.role,
-      password: this.userForm.value.password
+      Username: this.userForm.value.username,  // Backend RegisterUserDto'da Username bekliyor
+      Email: this.userForm.value.email,
+      Role: this.userForm.value.role,
+      Password: this.userForm.value.password
     };
 
     this.authService.register(userData).subscribe({

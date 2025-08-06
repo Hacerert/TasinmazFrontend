@@ -67,8 +67,8 @@ export class UserEditComponent implements OnInit {
       next: (user: User) => {
         this.userForm.patchValue({
           id: user.id,
-          username: user.username,
-          email: '', // <-- user.email yerine boş string atıyoruz, hata vermemesi için
+          username: user.userName,  // Backend'deki UserName ile uyumlu
+          email: user.email || '', // Backend'de email field'ı da var
           role: user.role
         });
         this.loading = false;

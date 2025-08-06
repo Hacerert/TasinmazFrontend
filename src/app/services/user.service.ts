@@ -7,9 +7,9 @@ import { AuthService } from './auth.service'; // Token almak için AuthService'i
 // Backend'den gelecek kullanıcı verisinin yapısı
 interface User {
   id: number;
-  username: string;
+  userName: string;  // Backend'deki UserName ile uyumlu
   role: string;
-  // Diğer alanlar buraya eklenebilir (örneğin email, vs.)
+  email?: string;  // Backend'de Email field'ı da var
 }
 
 @Injectable({

@@ -5,12 +5,12 @@ import { AuthService } from '../services/auth.service'; // Kimlik doğrulama ser
 import { Router } from '@angular/router'; // Router import edildi
 import { Subscription } from 'rxjs';
 
-// Kullanıcı arayüzü (interface) tanımlandı
+// Kullanıcı arayüzü (interface) tanımlandı - Backend ile uyumlu
 interface User {
   id: number;
-  username: string;
+  userName: string;  // Backend'deki UserName ile uyumlu
   role: string;
-  // Diğer kullanıcı özellikleri buraya eklenebilir (örneğin email, vs.)
+  email?: string;  // Backend'de Email field'ı da var
 }
 
 @Component({
@@ -110,6 +110,16 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       console.error('❌ UserManagement - Router navigation hatası:', error);
       console.log('🔄 UserManagement - Window.location ile yönlendiriliyor...');
       window.location.href = '/login';
+    });
+  }
+
+  // Log sayfasına yönlendirme metodu
+  viewLogs(): void {
+    console.log('📋 UserManagement - Log sayfasına yönlendiriliyor...');
+    this.router.navigate(['/logs']).then(() => {
+      console.log('✅ UserManagement - Log sayfasına başarıyla yönlendirildi');
+    }).catch((error) => {
+      console.error('❌ UserManagement - Log sayfasına yönlendirme hatası:', error);
     });
   }
 

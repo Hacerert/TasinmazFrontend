@@ -1,11 +1,10 @@
 // src/app/interfaces/user.interface.ts
 
-// Kullanıcı arayüzü (interface) tanımlandı.
-// Email alanı, derleme sorununu çözmek için geçici olarak kaldırıldı.
+// Kullanıcı arayüzü (interface) tanımlandı - Backend ile uyumlu
 export interface User {
   id: number;
-  username: string;
-  // email: string; // <-- BU SATIR ŞİMDİLİK KALDIRILDI!
+  userName: string;  // Backend'deki UserName ile uyumlu
+  email?: string;    // Backend'de Email field'ı da var
   role: string;
   // Diğer kullanıcı özellikleri buraya eklenebilir.
 }

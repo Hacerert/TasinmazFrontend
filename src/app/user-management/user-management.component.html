@@ -33,6 +33,15 @@
       >
         Çıkış Yap
       </button>
+
+      <!-- Loglar Butonu (Çıkış Yap butonu ile aynı boyutta) -->
+      <button (click)="viewLogs()"
+         style="background-color: #10b981; color: white; padding: 12px 24px; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: background-color 0.3s ease, transform 0.3s ease; border: none; cursor: pointer;"
+         onmouseover="this.style.backgroundColor='#059669'; this.style.transform='scale(1.05)';"
+         onmouseout="this.style.backgroundColor='#10b981'; this.style.transform='scale(1)';"
+      >
+        Loglar
+      </button>
     </div>
   </div>
 
@@ -70,7 +79,7 @@
                    class="transform scale-110">
           </td>
           <td class="px-6 py-4 text-base text-gray-800 whitespace-nowrap">{{ user.id }}</td>
-          <td class="px-6 py-4 text-base text-gray-800 whitespace-nowrap">{{ user.username }}</td>
+          <td class="px-6 py-4 text-base text-gray-800 whitespace-nowrap">{{ user.userName }}</td>
           <td class="px-6 py-4 text-base text-gray-800 whitespace-nowrap">{{ user.role }}</td>
           <td class="px-6 py-4 text-base text-gray-800 text-center">
             <div class="flex items-center justify-center space-x-4">

@@ -1,6 +1,7 @@
 // src/app/app.module.ts
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
+import { DatePipe } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { ReactiveFormsModule } from '@angular/forms'; // [formGroup] için gerekli
 import { FormsModule } from '@angular/forms'; // [(ngModel)] ve #ngForm için gerekli
@@ -19,7 +20,8 @@ import { UserManagementComponent } from './user-management/user-management.compo
 
 import { JwtModule } from '@auth0/angular-jwt';
 import { UserEditComponent } from './components/user-edit/user-edit.component'; // <-- BU SATIR DOĞRU
-import { UserAddComponent } from './components/user-add/user-add.component'; // Yeni eklenen UserAddComponent
+import { UserAddComponent } from './components/user-add/user-add.component';
+import { LogListComponent } from './log-list/log-list.component'; // Yeni eklenen UserAddComponent
 
 // JWT token'ının nerede saklandığını belirtiyoruz.
 export function tokenGetter() {
@@ -36,7 +38,8 @@ export function tokenGetter() {
     TasinmazEditComponent,
     UserManagementComponent,
     UserEditComponent,
-    UserAddComponent
+    UserAddComponent,
+    LogListComponent
   ],
   imports: [
     BrowserModule,
@@ -55,7 +58,7 @@ export function tokenGetter() {
       }
     })
   ],
-  providers: [],
+  providers: [DatePipe],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

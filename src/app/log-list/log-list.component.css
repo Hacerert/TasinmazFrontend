@@ -1,4 +1,4 @@
-/* Admin Paneli Tarzında Sade Taşınmaz Listesi Stilleri */
+/* Log Yönetimi - Admin Paneli Tarzında Sade Stiller */
 
 /* Genel kapsayıcı için maksimum genişlik ve ortalama */
 .container {
@@ -45,29 +45,7 @@ button {
   transition: all 0.2s ease-in-out;
 }
 
-/* SVG ikon boyutları */
-svg {
-  width: 1.75rem;
-  height: 1.75rem;
-}
-
 /* Hata mesajı için ek gölge */
 .bg-red-100.shadow-md {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
-
-/* Modal animasyonu */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-20px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.animate-fadeIn {
-  animation: fadeIn 0.3s ease-out;
 }

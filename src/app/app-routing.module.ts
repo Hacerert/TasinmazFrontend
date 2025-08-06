@@ -1,15 +1,17 @@
+// src/app/app-routing.module.ts
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
 // Component imports
 import { LoginComponent } from './login/login.component';
 import { RegisterComponent } from './components/register/register.component';
-import { TasinmazListComponent } from './tasinmaz-list/tasinmaz-list.component'; 
-import { TasinmazAddComponent } from './components/tasinmaz-add/tasinmaz-add.component'; 
+import { TasinmazListComponent } from './tasinmaz-list/tasinmaz-list.component';
+import { TasinmazAddComponent } from './components/tasinmaz-add/tasinmaz-add.component';
 import { TasinmazEditComponent } from './tasinmaz-edit/tasinmaz-edit.component';
 import { UserManagementComponent } from './user-management/user-management.component';
 import { UserEditComponent } from './components/user-edit/user-edit.component';
 import { UserAddComponent } from './components/user-add/user-add.component';
+import { LogListComponent } from './log-list/log-list.component'; // LogListComponent'i import ettik
 
 // Guards
 import { AuthGuard } from './guards/auth.guard';
@@ -17,7 +19,7 @@ import { AuthGuard } from './guards/auth.guard';
 const routes: Routes = [
   // Ana sayfa
   { path: '', redirectTo: '/login', pathMatch: 'full' },
-  
+
   // Auth rotaları
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
@@ -26,6 +28,7 @@ const routes: Routes = [
   { path: 'admin-dashboard', component: UserManagementComponent, canActivate: [AuthGuard] },
   { path: 'admin/users/edit/:id', component: UserEditComponent, canActivate: [AuthGuard] },
   { path: 'admin/users/add', component: UserAddComponent, canActivate: [AuthGuard] },
+  { path: 'logs', component: LogListComponent, canActivate: [AuthGuard] }, // LogListComponent için yeni rota
 
   // Taşınmaz rotaları - AuthGuard ile korunuyor
   { path: 'tasinmazlar', component: TasinmazListComponent, canActivate: [AuthGuard] },

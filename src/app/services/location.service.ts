@@ -4,18 +4,18 @@ import { Observable } from 'rxjs';
 
 export interface Il {
   id: number;
-  name: string;
+  ad: string;
 }
 
 export interface Ilce {
   id: number;
-  name: string;
+  ad: string;
   ilId: number;
 }
 
 export interface Mahalle {
   id: number;
-  name: string;
+  ad: string;
   ilceId: number;
 }
 
@@ -23,19 +23,29 @@ export interface Mahalle {
   providedIn: 'root'
 })
 export class LocationService {
-  private apiUrl = 'http://localhost:5000/api/Location'; // Backend location endpoint'iniz
+  private baseUrl = 'http://localhost:5000/api';
 
   constructor(private http: HttpClient) { }
 
   getIller(): Observable<Il[]> {
-    return this.http.get<Il[]>(`${this.apiUrl}/iller`);
+    return this.http.get<Il[]>(`${this.baseUrl}/Il`);
   }
 
   getIlceler(ilId: number): Observable<Ilce[]> {
-    return this.http.get<Ilce[]>(`${this.apiUrl}/ilceler/${ilId}`);
+    return this.http.get<Ilce[]>(`${this.baseUrl}/Ilce/${ilId}`);
   }
 
   getMahalleler(ilceId: number): Observable<Mahalle[]> {
-    return this.http.get<Mahalle[]>(`${this.apiUrl}/mahalleler/${ilceId}`);
+    return this.http.get<Mahalle[]>(`${this.baseUrl}/Mahalle`);
+  }
+
+  // Tüm mahalleleri al (filter için)
+  getAllMahalleler(): Observable<Mahalle[]> {
+    return this.http.get<Mahalle[]>(`${this.baseUrl}/Mahalle`);
+  }
+
+  // Tüm ilçeleri al (filter için) 
+  getAllIlceler(): Observable<Ilce[]> {
+    return this.http.get<Ilce[]>(`${this.baseUrl}/Ilce`);
   }
 }
