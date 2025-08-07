@@ -4,6 +4,8 @@ import { UserService } from '../services/user.service'; // Kullanıcı servisi
 import { AuthService } from '../services/auth.service'; // Kimlik doğrulama servisi
 import { Router } from '@angular/router'; // Router import edildi
 import { Subscription } from 'rxjs';
+import { DatePipe } from '@angular/common';
+import * as XLSX from 'xlsx';
 
 // Kullanıcı arayüzü (interface) tanımlandı - Backend ile uyumlu
 interface User {
@@ -28,7 +30,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   constructor(
     private userService: UserService,
     private authService: AuthService,
-    private router: Router // Router enjekte edildi
+    private router: Router, // Router enjekte edildi
+    private datePipe: DatePipe
   ) { }
 
   ngOnInit(): void {
@@ -187,5 +190,60 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         }
       });
     });
+  }
+
+  // Seçilen kullanıcıları Excel'e aktarma
+  exportSelectedToExcel(): void {
+    console.log('📊 Seçilen kullanıcılar Excel export başlatılıyor...');
+
+    if (this.selectedUserIds.length === 0) {
+      console.warn('Aktarılacak kullanıcı seçilmemiş.');
+      return;
+    }
+
+    // Seçilen kullanıcıları filtrele
+    const selectedUsers = this.users.filter(user => this.selectedUserIds.includes(user.id));
+
+    const data = selectedUsers.map((user, index) => ({
+      'Sıra No': index + 1,
+      'ID': user.id,
+      'Kullanıcı Adı': user.userName,
+      'Email': user.email || '-',
+      'Rol': user.role
+    }));
+
+    const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(data);
+
+    // Sütun genişliklerini ayarla
+    const columnWidths = [
+      { wch: 8 },   // Sıra No
+      { wch: 8 },   // ID
+      { wch: 20 },  // Kullanıcı Adı
+      { wch: 30 },  // Email
+      { wch: 15 }   // Rol
+    ];
+    ws['!cols'] = columnWidths;
+
+    const wb: XLSX.WorkBook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Seçilen Kullanıcılar');
+
+    const simdi = new Date();
+    const tarih = this.datePipe.transform(simdi, 'dd-MM-yyyy');
+    const saat = this.datePipe.transform(simdi, 'HH-mm-ss');
+    const dosyaAdi = `Secilen_Kullanicilar_${tarih}_${saat}.xlsx`;
+
+    XLSX.writeFile(wb, dosyaAdi);
+
+    console.log(`✅ Excel dosyası indirildi: ${dosyaAdi}`);
+  }
+
+  // Navigasyon metodları
+  goToTasinmazlar(): void {
+    this.router.navigate(['/tasinmaz-list']);
+  }
+
+  goToUsers(): void {
+    // Zaten kullanıcı yönetimi sayfasındayız, herhangi bir şey yapmaya gerek yok
+    console.log('Zaten kullanıcılar sayfasındasınız');
   }
 }

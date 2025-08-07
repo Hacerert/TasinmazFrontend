@@ -1,57 +1,71 @@
-/* src/app/user-management/user-management.component.css */
+/* Admin Paneli - Kompakt Tasarım */
 
-/* Genel kapsayıcı için maksimum genişlik ve ortalama */
+/* Genel kapsayıcı */
 .container {
-  max-width: 1200px; /* Daha okunaklı bir genişlik */
+  max-width: 1000px;
   margin-left: auto;
   margin-right: auto;
 }
 
-/* Tablo için özel stiller */
+/* Kompakt Butonlar */
+.btn {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-sm {
+  padding: 4px 8px;
+  font-size: 11px;
+}
+
+.btn-blue { background: #3b82f6; color: white; }
+.btn-blue:hover { background: #2563eb; }
+
+.btn-red { background: #ef4444; color: white; }
+.btn-red:hover { background: #dc2626; }
+.btn-red:disabled { background: #9ca3af; cursor: not-allowed; }
+
+.btn-green { background: #10b981; color: white; }
+.btn-green:hover { background: #059669; }
+
+.btn-purple { background: #8b5cf6; color: white; }
+.btn-purple:hover { background: #7c3aed; }
+
+.btn-cyan { background: #06b6d4; color: white; }
+.btn-cyan:hover { background: #0891b2; }
+
+/* Kompakt Tablo Stili */
 table {
   width: 100%;
-  border-collapse: collapse; /* Kenarlıkları birleştir */
+  border-collapse: collapse;
+  font-size: 14px;
 }
 
 th, td {
-  padding: 1rem 1.5rem; /* px-6 py-4 karşılığı */
+  padding: 8px 12px;
   text-align: left;
-  vertical-align: middle; /* Dikey hizalama */
+  vertical-align: middle;
+  border-bottom: 1px solid #e5e7eb;
 }
 
-thead th {
-  background-color: #4c679e; /* bg-gray-100 */
-  color: #ffffff; /* text-gray-700 */
-  font-weight: 600; /* font-semibold */
-  text-transform: uppercase;
-  font-size: 0.875rem; /* text-sm */
-  border-bottom: 2px solid #0a3d8a; /* border-b-2 border-gray-300 */
+th {
+  background: #f3f4f6;
+  color: #374151;
+  font-weight: 500;
+  font-size: 12px;
 }
 
-tbody tr {
-  border-bottom: 1px solid #a6bff1; /* border-b border-gray-100 */
+tr:hover {
+  background: #f9fafb;
 }
 
-tbody tr:last-child {
-  border-bottom: none; /* Son satırda alt çizgi olmasın */
-}
-
-tbody tr:hover {
-  background-color: #9dceff; /* hover:bg-gray-50 */
-}
-
-/* Butonlar için genel geçiş efekti */
-button {
-  transition: all 0.2s ease-in-out;
-}
-
-/* SVG ikon boyutları */
+/* Kompakt SVG ikonları */
 svg {
-  width: 1.75rem; /* w-7 */
-  height: 1.75rem; /* h-7 */
-}
-
-/* Hata mesajı için ek gölge */
-.bg-red-100.shadow-md {
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  width: 16px;
+  height: 16px;
 }

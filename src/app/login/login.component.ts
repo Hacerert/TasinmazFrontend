@@ -2,6 +2,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-login',
@@ -16,10 +17,24 @@ export class LoginComponent implements OnInit {
   constructor(private authService: AuthService, private router: Router) { }
 
   ngOnInit(): void {
-    // Eğer kullanıcı zaten giriş yapmış ve token'ı geçerliyse, rolüne göre yönlendir
+    // ACIL: Tüm storage'ı temizle ve zorla login sayfasında kal
+    console.log('🔧 Login component açıldı - storage kontrolü yapılıyor');
+    
+    // URL'de tasinmaz varsa zorla login'e yönlendir
+    if (window.location.pathname.includes('tasinmaz')) {
+      console.log('🚫 Taşınmaz URLi tespit edildi - zorla logine yönlendiriliyor');
+      this.authService.logout();
+      window.location.replace('/login');
+      return;
+    }
+    
+    // Kullanıcı login sayfasında kalabilsin - otomatik yönlendirme kaldırıldı
+    // Eğer gerçekten otomatik yönlendirme istiyorsanız aşağıdaki kod aktif edilebilir:
+    /*
     if (this.authService.isLoggedIn()) {
       this.redirectBasedOnRole();
     }
+    */
   }
 
   onLogin(): void {
@@ -28,8 +43,12 @@ export class LoginComponent implements OnInit {
 
     this.authService.login(credentials).subscribe({
       next: (res) => {
-        // Başarılı giriş sonrası rolüne göre yönlendirme
-        this.redirectBasedOnRole();
+        // Role observable'ı dinleyerek yönlendirme yap
+        this.authService.getUserRoleObservable().subscribe(role => {
+          if (role) { // Role yüklendiğinde yönlendir
+            this.redirectBasedOnRoleWithParam(role);
+          }
+        });
       },
       error: (error) => {
         console.error('❌ Giriş hatası:', error);
@@ -50,10 +69,34 @@ export class LoginComponent implements OnInit {
    */
   private redirectBasedOnRole(): void {
     const userRole = this.authService.getUserRole();
+    console.log('🔍 Redirect Role Check:', userRole);
     
     if (userRole === 'Admin') {
+      console.log('✅ Admin kullanıcı - Admin dashboard\'a yönlendiriliyor');
       this.router.navigate(['/admin-dashboard']);
+    } else if (userRole === 'User') {
+      console.log('✅ User kullanıcı - Taşınmaz listesine yönlendiriliyor');
+      this.router.navigate(['/tasinmazlar']);
     } else {
+      console.log('⚠️ Rol bulunamadı:', userRole, '- Varsayılan olarak taşınmaz listesine yönlendiriliyor');
+      this.router.navigate(['/tasinmazlar']);
+    }
+  }
+
+  /**
+   * Observable'dan gelen role ile yönlendirme yapar
+   */
+  private redirectBasedOnRoleWithParam(userRole: string): void {
+    console.log('🔍 Observable Redirect Role Check:', userRole);
+    
+    if (userRole === 'Admin') {
+      console.log('✅ Admin kullanıcı - Admin dashboard\'a yönlendiriliyor');
+      this.router.navigate(['/admin-dashboard']);
+    } else if (userRole === 'User') {
+      console.log('✅ User kullanıcı - Taşınmaz listesine yönlendiriliyor');
+      this.router.navigate(['/tasinmazlar']);
+    } else {
+      console.log('⚠️ Bilinmeyen rol:', userRole, '- Varsayılan olarak taşınmaz listesine yönlendiriliyor');
       this.router.navigate(['/tasinmazlar']);
     }
   }

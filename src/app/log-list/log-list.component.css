@@ -1,51 +1,195 @@
-/* Log Yönetimi - Admin Paneli Tarzında Sade Stiller */
+/* Log Yönetimi - Taşınmaz Uyumlu Premium Tasarım */
 
-/* Genel kapsayıcı için maksimum genişlik ve ortalama */
+/* Genel kapsayıcı */
 .container {
   max-width: 1200px;
   margin-left: auto;
   margin-right: auto;
 }
 
-/* Tablo için özel stiller */
-table {
+/* Modern Clean Cards - Taşınmaz Uyumlu */
+.glass-card {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 16px;
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Kompakt Filtre Stilleri */
+.compact-filter {
+  max-width: 100%;
+}
+
+.compact-select, .compact-input {
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 13px;
+  min-width: 90px;
+  max-width: 130px;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.compact-select:focus, .compact-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.compact-input::placeholder {
+  color: #9ca3af;
+  font-size: 11px;
+}
+
+/* Premium Butonlar - Taşınmaz Uyumlu */
+.premium-btn {
+  padding: 10px 20px;
+  border: 1px solid var(--btn-border);
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--btn-bg);
+  color: var(--btn-color);
+  display: inline-flex;
+  align-items: center;
+}
+
+.premium-btn-primary {
+  --btn-bg: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  --btn-border: #3b82f6;
+  --btn-color: white;
+}
+
+.premium-btn-primary:hover {
+  --btn-bg: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.premium-btn-secondary {
+  --btn-bg: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  --btn-border: #ef4444;
+  --btn-color: white;
+}
+
+.premium-btn-secondary:hover {
+  --btn-bg: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* Premium Tablo - Taşınmaz Uyumlu */
+.premium-table-container {
+  background: white;
+  border-radius: 16px;
+}
+
+.premium-table {
   width: 100%;
   border-collapse: collapse;
+  font-size: 14px;
+  background: white;
 }
 
-th, td {
-  padding: 1rem 1.5rem;
+.premium-table-header {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border-bottom: 2px solid #3b82f6;
+}
+
+.premium-table-header th {
+  padding: 16px;
   text-align: left;
-  vertical-align: middle;
-}
-
-thead th {
-  background-color: #4c679e;
-  color: #ffffff;
   font-weight: 600;
+  color: #1e40af;
+  font-size: 13px;
   text-transform: uppercase;
-  font-size: 0.875rem;
-  border-bottom: 2px solid #0a3d8a;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #3b82f6;
 }
 
-tbody tr {
-  border-bottom: 1px solid #a6bff1;
+.premium-table-body {
+  background: white;
 }
 
-tbody tr:last-child {
-  border-bottom: none;
+.premium-table-row {
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #f1f5f9;
 }
 
-tbody tr:hover {
-  background-color: #9dceff;
+.premium-table-row:hover {
+  background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+  transform: scale(1.005);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
 }
 
-/* Butonlar için genel geçiş efekti */
-button {
-  transition: all 0.2s ease-in-out;
+.premium-table-row-even {
+  background: #ffffff;
 }
 
-/* Hata mesajı için ek gölge */
-.bg-red-100.shadow-md {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+.premium-table-row-odd {
+  background: #f8fafc;
 }
+
+.premium-table-row-even:hover,
+.premium-table-row-odd:hover {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+/* Premium Checkbox */
+.premium-checkbox {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #d1d5db;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.premium-checkbox:checked {
+  background: #3b82f6;
+  border-color: #3b82f6;
+}
+
+/* Kompakt Butonlar - Eski */
+.btn {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-sm {
+  padding: 4px 8px;
+  font-size: 11px;
+}
+
+.btn-blue { background: #3b82f6; color: white; }
+.btn-blue:hover { background: #2563eb; }
+
+.btn-green { background: #10b981; color: white; }
+.btn-green:hover { background: #059669; }
+
+.btn-orange { background: #f97316; color: white; }
+.btn-orange:hover { background: #ea580c; }
+.btn-orange:disabled { background: #9ca3af; cursor: not-allowed; }
+
+.btn-gray { background: #6b7280; color: white; }
+.btn-gray:hover { background: #4b5563; }
+.btn-gray:disabled { background: #9ca3af; cursor: not-allowed; }

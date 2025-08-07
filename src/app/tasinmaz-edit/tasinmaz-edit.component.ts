@@ -1,15 +1,31 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { TasinmazService, TasinmazListDto, TasinmazUpdateRequest } from '../services/tasinmaz.service';
 import { LocationService } from '../services/location.service';
+
+// OpenLayers imports
+import Map from 'ol/Map';
+import View from 'ol/View';
+import TileLayer from 'ol/layer/Tile';
+import VectorLayer from 'ol/layer/Vector';
+import VectorSource from 'ol/source/Vector';
+import OSM from 'ol/source/OSM';
+import Draw from 'ol/interaction/Draw';
+import Modify from 'ol/interaction/Modify';
+import Snap from 'ol/interaction/Snap';
+import { transform } from 'ol/proj';
+import { Polygon } from 'ol/geom';
+import Feature from 'ol/Feature';
+import { Style, Stroke, Fill } from 'ol/style';
+import { getArea } from 'ol/sphere';
 
 @Component({
   selector: 'app-tasinmaz-edit',
   templateUrl: './tasinmaz-edit.component.html',
   styleUrls: ['./tasinmaz-edit.component.css']
 })
-export class TasinmazEditComponent implements OnInit {
+export class TasinmazEditComponent implements OnInit, AfterViewInit, OnDestroy {
   tasinmazForm!: FormGroup;
   tasinmazId: number | null = null;
   iller: any[] = [];
@@ -19,6 +35,18 @@ export class TasinmazEditComponent implements OnInit {
   loading: boolean = false;
   error: string | null = null;
   successMessage: string | null = null;
+
+  // OpenLayers harita özellikleri
+  map!: Map;
+  vectorSource!: VectorSource;
+  vectorLayer!: VectorLayer<VectorSource>;
+  drawInteraction!: Draw;
+  modifyInteraction!: Modify;
+  snapInteraction!: Snap;
+  isDrawing: boolean = false;
+  hasPolygon: boolean = false;
+  polygonArea: number = 0;
+  currentPolygon: Feature | null = null;
 
   constructor(
     private fb: FormBuilder, 
@@ -39,6 +67,19 @@ export class TasinmazEditComponent implements OnInit {
         this.loadTasinmaz();
       }
     });
+  }
+
+  ngAfterViewInit(): void {
+    // Haritayı initialize et
+    setTimeout(() => {
+      this.initMap();
+    }, 1000); // Daha uzun süre bekle
+  }
+
+  ngOnDestroy(): void {
+    if (this.map) {
+      this.map.setTarget(undefined);
+    }
   }
 
   initForm(): void {
@@ -170,6 +211,13 @@ export class TasinmazEditComponent implements OnInit {
         
         console.log('✅ Form değerleri set edildi, current form value:', this.tasinmazForm.value);
         this.loading = false;
+        
+        // Mevcut koordinatları haritada göster
+        if (tasinmaz.koordinat) {
+          setTimeout(() => {
+            this.loadExistingPolygon(tasinmaz.koordinat);
+          }, 500);
+        }
       },
       error: (err: any) => {
         console.error('Mahalleler alınırken hata:', err);
@@ -187,6 +235,13 @@ export class TasinmazEditComponent implements OnInit {
         });
         
         this.loading = false;
+        
+        // Mevcut koordinatları haritada göster
+        if (tasinmaz.koordinat) {
+          setTimeout(() => {
+            this.loadExistingPolygon(tasinmaz.koordinat);
+          }, 500);
+        }
       }
     });
   }
@@ -245,6 +300,13 @@ export class TasinmazEditComponent implements OnInit {
             
             console.log('✅ Tüm lokasyon bilgileri yüklendi ve form set edildi');
             this.loading = false;
+            
+            // Mevcut koordinatları haritada göster
+            if (tasinmaz.koordinat) {
+              setTimeout(() => {
+                this.loadExistingPolygon(tasinmaz.koordinat);
+              }, 500);
+            }
           },
           error: () => this.setFormWithoutLocation(tasinmaz, mahalleId)
         });
@@ -259,6 +321,13 @@ export class TasinmazEditComponent implements OnInit {
       mahalle: mahalleId
     });
     this.loading = false;
+    
+    // Mevcut koordinatları haritada göster
+    if (tasinmaz.koordinat) {
+      setTimeout(() => {
+        this.loadExistingPolygon(tasinmaz.koordinat);
+      }, 500);
+    }
   }
 
   onIlChange(): void {
@@ -353,5 +422,195 @@ export class TasinmazEditComponent implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/tasinmaz-list']);
+  }
+
+  // ====== HARITA METODLARİ ======
+
+  initMap(): void {
+    console.log('🗺️ Harita initialize ediliyor...');
+    
+    // DOM element'in var olduğunu kontrol et
+    const mapElement = document.getElementById('editMap');
+    if (!mapElement) {
+      console.error('❌ editMap elementi bulunamadı!');
+      setTimeout(() => {
+        this.initMap();
+      }, 500);
+      return;
+    }
+
+    try {
+      // Vector source ve layer oluştur
+      this.vectorSource = new VectorSource();
+      this.vectorLayer = new VectorLayer({
+        source: this.vectorSource,
+        style: new Style({
+          stroke: new Stroke({
+            color: '#3b82f6',
+            width: 2
+          }),
+          fill: new Fill({
+            color: 'rgba(59, 130, 246, 0.1)'
+          })
+        })
+      });
+
+      // Haritayı oluştur
+      this.map = new Map({
+        target: 'editMap',
+        layers: [
+          new TileLayer({
+            source: new OSM()
+          }),
+          this.vectorLayer
+        ],
+        view: new View({
+          center: transform([35.0, 39.0], 'EPSG:4326', 'EPSG:3857'), // Türkiye merkezi
+          zoom: 6
+        })
+      });
+
+      // Modify interaction ekle (mevcut poligonları düzenlemek için)
+      this.modifyInteraction = new Modify({ source: this.vectorSource });
+      this.map.addInteraction(this.modifyInteraction);
+
+      // Snap interaction ekle
+      this.snapInteraction = new Snap({ source: this.vectorSource });
+      this.map.addInteraction(this.snapInteraction);
+
+      // Modify olayını dinle
+      this.modifyInteraction.on('modifyend', () => {
+        this.updatePolygonCoordinates();
+      });
+
+      console.log('✅ Harita başarıyla initialize edildi');
+    } catch (error) {
+      console.error('❌ Harita initialize edilirken hata:', error);
+    }
+  }
+
+  startDrawing(): void {
+    // Önceki çizimi temizle
+    this.clearDrawing();
+
+    // Draw interaction oluştur
+    this.drawInteraction = new Draw({
+      source: this.vectorSource,
+      type: 'Polygon',
+      style: new Style({
+        stroke: new Stroke({
+          color: '#ef4444',
+          width: 2,
+          lineDash: [5, 5]
+        }),
+        fill: new Fill({
+          color: 'rgba(239, 68, 68, 0.1)'
+        })
+      })
+    });
+
+    this.map.addInteraction(this.drawInteraction);
+    this.isDrawing = true;
+
+    // Çizim bittiğinde
+    this.drawInteraction.on('drawend', (event) => {
+      this.currentPolygon = event.feature;
+      this.hasPolygon = true;
+      this.map.removeInteraction(this.drawInteraction);
+      this.isDrawing = false;
+      
+      // Koordinatları güncelle
+      this.updatePolygonCoordinates();
+    });
+  }
+
+  clearDrawing(): void {
+    // Vector source'u temizle
+    this.vectorSource.clear();
+    this.hasPolygon = false;
+    this.polygonArea = 0;
+    this.currentPolygon = null;
+    
+    // Form alanını temizle
+    this.tasinmazForm.get('koordinat')?.setValue('');
+    
+    // Draw interaction'ı kaldır
+    if (this.drawInteraction) {
+      this.map.removeInteraction(this.drawInteraction);
+      this.isDrawing = false;
+    }
+  }
+
+  updatePolygonCoordinates(): void {
+    if (this.currentPolygon) {
+      const geometry = this.currentPolygon.getGeometry() as Polygon;
+      if (geometry) {
+        // Get coordinates in EPSG:4326 (WGS84)
+        const coordinates = geometry.clone().transform('EPSG:3857', 'EPSG:4326').getCoordinates()[0];
+        
+        // Format coordinates as string
+        const coordString = coordinates.map((coord: number[]) => 
+          `${coord[1].toFixed(6)},${coord[0].toFixed(6)}`
+        ).join(';');
+        
+        this.tasinmazForm.get('koordinat')?.setValue(coordString);
+        this.calculateArea();
+      }
+    }
+  }
+
+  calculateArea(): void {
+    if (this.currentPolygon) {
+      const geometry = this.currentPolygon.getGeometry() as Polygon;
+      if (geometry) {
+        this.polygonArea = getArea(geometry);
+      }
+    }
+  }
+
+  // Mevcut koordinatları haritada göster
+  loadExistingPolygon(koordinatString: string): void {
+    if (!koordinatString || !this.map) return;
+
+    try {
+      // Koordinat string'ini parse et
+      const coordPairs = koordinatString.split(';');
+      const coordinates = coordPairs.map(pair => {
+        const [lat, lng] = pair.split(',').map(Number);
+        return [lng, lat]; // OpenLayers [lng, lat] formatı kullanır
+      });
+
+      // İlk ve son koordinat aynı değilse, son koordinatı ekle (polygon kapatmak için)
+      if (coordinates[0][0] !== coordinates[coordinates.length - 1][0] || 
+          coordinates[0][1] !== coordinates[coordinates.length - 1][1]) {
+        coordinates.push(coordinates[0]);
+      }
+
+      // WGS84'ten Web Mercator'a dönüştür
+      const transformedCoords = coordinates.map(coord => 
+        transform(coord, 'EPSG:4326', 'EPSG:3857')
+      );
+
+      // Polygon geometry oluştur
+      const polygon = new Polygon([transformedCoords]);
+      
+      // Feature oluştur
+      const feature = new Feature(polygon);
+      
+      // Vector source'a ekle
+      this.vectorSource.addFeature(feature);
+      this.currentPolygon = feature;
+      this.hasPolygon = true;
+      
+      // Alanı hesapla
+      this.calculateArea();
+      
+      // Harita görünümünü poligona fit et
+      this.map.getView().fit(polygon, { padding: [50, 50, 50, 50] });
+      
+      console.log('✅ Mevcut poligon haritada gösterildi');
+    } catch (error) {
+      console.error('❌ Koordinat parse edilemedi:', error);
+    }
   }
 }

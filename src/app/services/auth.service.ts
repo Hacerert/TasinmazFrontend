@@ -101,6 +101,11 @@ export class AuthService {
     return this.userRoleSubject.value;
   }
 
+  // Observable olarak role'u al - async işlemler için
+  getUserRoleObservable(): Observable<string | null> {
+    return this.userRole$;
+  }
+
   getUserId(): string | null {
     return this.userIdSubject.value;
   }
@@ -108,9 +113,13 @@ export class AuthService {
   private decodeTokenAndSetClaims(token: string): void {
     try {
       const decodedToken = this.jwtHelper.decodeToken(token);
+      console.log('🔍 Decoded JWT Token:', decodedToken);
       
       const role = decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || decodedToken.role;
       const userId = decodedToken.sub || decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/nameidentifier']; 
+      
+      console.log('🔍 Extracted Role:', role);
+      console.log('🔍 Extracted UserId:', userId);
       
       this.userRoleSubject.next(role || null);
       this.userIdSubject.next(userId || null);

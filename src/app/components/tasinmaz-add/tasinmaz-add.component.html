@@ -60,7 +60,7 @@
         </div>
       </div>
 
-      <div class="full">
+      <div class="full-width">
         <label for="adres">Adres</label>
         <textarea id="adres" formControlName="adres" rows="3" placeholder="Açık adres" [disabled]="loading"></textarea>
         <div *ngIf="tasinmazForm.get('adres')?.invalid && tasinmazForm.get('adres')?.touched" class="error-msg">
@@ -71,9 +71,9 @@
       <div class="tasinmaz-add-grid">
         <div>
           <label for="koordinat">Koordinat</label>
-          <input type="text" id="koordinat" formControlName="koordinat" placeholder="Enlem, boylam" [disabled]="loading">
+          <input type="text" id="koordinat" formControlName="koordinat" placeholder="Haritadan seçilen poligon koordinatları" [disabled]="true" readonly>
           <div *ngIf="tasinmazForm.get('koordinat')?.invalid && tasinmazForm.get('koordinat')?.touched" class="error-msg">
-            Koordinat bilgisi zorunludur.
+            Koordinat bilgisi zorunludur. Haritadan poligon çiziniz.
           </div>
         </div>
         
@@ -86,6 +86,27 @@
           <div *ngIf="tasinmazForm.get('tasinmazTipi')?.invalid && tasinmazForm.get('tasinmazTipi')?.touched" class="error-msg">
             Taşınmaz tipi seçimi zorunludur.
           </div>
+        </div>
+      </div>
+
+      <!-- OpenLayers Harita -->
+      <div class="map-container">
+        <label class="map-label">Konum</label>
+        <div class="map-instructions">
+          <p>🗺️ Haritada poligon çizerek taşınmazın sınırlarını belirleyin</p>
+          <div class="map-controls">
+            <button type="button" (click)="startDrawing()" [disabled]="isDrawing" class="map-btn draw-btn">
+              📐 Poligon Çiz
+            </button>
+            <button type="button" (click)="clearDrawing()" [disabled]="!hasPolygon" class="map-btn clear-btn">
+              🗑️ Temizle
+            </button>
+            <span *ngIf="polygonArea" class="area-info">📏 Alan: {{ polygonArea }} m²</span>
+          </div>
+        </div>
+        <div id="map" class="map"></div>
+        <div *ngIf="!hasPolygon" class="map-warning">
+          ⚠️ Taşınmaz sınırlarını belirlemek için haritada poligon çiziniz
         </div>
       </div>
 

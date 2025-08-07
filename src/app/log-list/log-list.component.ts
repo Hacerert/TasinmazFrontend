@@ -37,6 +37,12 @@ export class LogListComponent implements OnInit, OnDestroy {
   private dataSubscription: Subscription | undefined;
   allUsers: any[] = [];
 
+  // Seçim işlevselliği
+  selectedLogIds: number[] = [];
+
+  // Math referansı template'de kullanmak için
+  Math = Math;
+
   // FİLTRELEME DEĞİŞKENLERİ
   filterUserId: string = '';
   filterStatus: string = '';
@@ -51,7 +57,7 @@ export class LogListComponent implements OnInit, OnDestroy {
 
   // Sayfalama Değişkenleri
   currentPage: number = 1;
-  itemsPerPage: number = 8; // Her sayfada gösterilecek kayıt sayısı
+  itemsPerPage: number = 5; // Her sayfada gösterilecek kayıt sayısı
 
   constructor(
     private logService: LogService,
@@ -233,15 +239,26 @@ export class LogListComponent implements OnInit, OnDestroy {
     console.log('Filtreler temizlendi.');
   }
 
-  exportToExcel(): void {
-    console.log('📊 Excel export başlatılıyor...');
+  exportToExcel(exportAll: boolean = true): void {
+    console.log('📊 Excel export başlatılıyor...', exportAll ? 'Tümü' : 'Seçililer');
 
-    if (this.filteredLogs.length === 0) {
-      console.warn('Aktarılacak log kaydı bulunmamaktadır.');
-      return;
+    let dataToExport: Log[] = [];
+
+    if (exportAll) {
+      if (this.filteredLogs.length === 0) {
+        console.warn('Aktarılacak log kaydı bulunmamaktadır.');
+        return;
+      }
+      dataToExport = this.filteredLogs;
+    } else {
+      if (this.selectedLogIds.length === 0) {
+        console.warn('Aktarılacak seçili log kaydı bulunmamaktadır.');
+        return;
+      }
+      dataToExport = this.filteredLogs.filter(log => this.selectedLogIds.includes(log.id));
     }
 
-    const data = this.filteredLogs.map((log, index) => ({
+    const data = dataToExport.map((log, index) => ({
       'Sıra No': index + 1,
       'Log ID': log.id,
       'Kullanıcı ID': log.userId || '-',
@@ -281,11 +298,35 @@ export class LogListComponent implements OnInit, OnDestroy {
     const simdi = new Date();
     const tarih = this.datePipe.transform(simdi, 'dd-MM-yyyy');
     const saat = this.datePipe.transform(simdi, 'HH-mm-ss');
-    const dosyaAdi = `Log_Kayitlari_${tarih}_${saat}.xlsx`;
+    const exportType = exportAll ? 'Tumunu' : 'Secili';
+    const dosyaAdi = `Log_Kayitlari_${exportType}_${tarih}_${saat}.xlsx`;
 
     XLSX.writeFile(wb, dosyaAdi);
 
     console.log(`✅ Excel dosyası indirildi: ${dosyaAdi}`);
+  }
+
+  // Seçim işlevleri
+  toggleSelectAll(event: any): void {
+    if (event.target.checked) {
+      this.selectedLogIds = this.paginatedLogs.map(log => log.id);
+    } else {
+      this.selectedLogIds = [];
+    }
+  }
+
+  onCheckboxChange(logId: number, event: any): void {
+    if (event.target.checked) {
+      if (!this.selectedLogIds.includes(logId)) {
+        this.selectedLogIds.push(logId);
+      }
+    } else {
+      this.selectedLogIds = this.selectedLogIds.filter(id => id !== logId);
+    }
+  }
+
+  exportSelectedToExcel(): void {
+    this.exportToExcel(false);
   }
 
   goBack(): void {

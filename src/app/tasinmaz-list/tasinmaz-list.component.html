@@ -1,49 +1,152 @@
-<!-- Taşınmaz Yönetimi - Admin Paneli Stili -->
-<div class="container mx-auto p-6 bg-gray-50 min-h-screen rounded-xl shadow-2xl">
-  <div class="mb-8 border-b-2 border-gray-200 pb-4">
-    <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">Taşınmaz Yönetimi</h1>
-    <div class="flex justify-end space-x-2 mt-4">
-      <!-- Yeni Taşınmaz Ekle Butonu -->
+<!-- 🎨 PREMIUM TAŞINMAZ YÖNETİMİ -->
+<div class="premium-background">
+  <div class="container mx-auto p-8">
+    
+    <!-- Kompakt Header -->
+    <div class="mb-4 border-b border-gray-200 pb-3">
+      <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gray-900">Taşınmaz Yönetimi</h1>
+        <button (click)="goBackToAdmin()" class="btn btn-sm btn-blue px-4 py-2 font-semibold">← Geri Dön</button>
+      </div>
+    </div>
+
+    <!-- Kompakt Filtre -->
+    <div class="compact-filter mb-3">
+      <div class="p-3 bg-white border border-gray-200 rounded overflow-x-auto">
+        <!-- Tek Satırda Tüm Filtreler -->
+        <div class="flex items-center space-x-2 nowrap-container">
+          <div class="flex items-center space-x-1 flex-shrink-0">
+            <span class="text-xs">🏙️</span>
+            <select [(ngModel)]="filterSehir" class="compact-select">
+              <option value="">Şehir</option>
+              <option *ngFor="let sehir of availableSehirler" [value]="sehir">{{ sehir }}</option>
+            </select>
+          </div>
+          
+          <div class="flex items-center space-x-1 flex-shrink-0">
+            <span class="text-xs">🏘️</span>
+            <select [(ngModel)]="filterIlce" class="compact-select">
+              <option value="">İlçe</option>
+              <option *ngFor="let ilce of availableIlceler" [value]="ilce">{{ ilce }}</option>
+            </select>
+          </div>
+          
+          <div class="flex items-center space-x-1 flex-shrink-0">
+            <span class="text-xs">🏡</span>
+            <select [(ngModel)]="filterMahalle" class="compact-select">
+              <option value="">Mahalle</option>
+              <option *ngFor="let mahalle of availableMahalleler" [value]="mahalle">{{ mahalle }}</option>
+            </select>
+          </div>
+          
+          <div class="flex items-center space-x-1 flex-shrink-0">
+            <span class="text-xs">🏠</span>
+            <select [(ngModel)]="filterTasinmazTuru" class="compact-select">
+              <option value="">Tür</option>
+              <option *ngFor="let tur of availableTurler" [value]="tur">{{ tur }}</option>
+            </select>
+          </div>
+          
+          <div class="flex items-center space-x-1 flex-shrink-0">
+            <span class="text-xs">📋</span>
+            <input [(ngModel)]="filterParselNumarasi" placeholder="Parsel" class="compact-input">
+          </div>
+          
+          <div class="flex items-center space-x-1 flex-shrink-0">
+            <span class="text-xs">📄</span>
+            <input [(ngModel)]="filterPaftaNumarasi" placeholder="Pafta" class="compact-input">
+          </div>
+          
+          <div class="flex items-center space-x-1 flex-shrink-0">
+            <span class="text-xs">📍</span>
+            <input [(ngModel)]="filterAdres" placeholder="Adres" class="compact-input">
+          </div>
+          
+          <div class="flex items-center space-x-1 flex-shrink-0">
+            <span class="text-xs">🏷️</span>
+            <input [(ngModel)]="filterAda" placeholder="Ada" class="compact-input">
+          </div>
+          
+          <button (click)="applyFilters()" class="btn btn-sm btn-blue flex-shrink-0">🔍</button>
+          <button (click)="clearFilters()" class="btn btn-sm btn-gray flex-shrink-0">✕</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kompakt İşlem Menüsü -->
+    <div class="bg-white border border-gray-200 rounded mb-3">
+      <!-- Kompakt Butonlar -->
+      <div class="p-3">
+        <div class="flex flex-wrap gap-3 justify-center">
+          
+          <!-- 🟠 Seçilileri Aktar Butonu -->
       <button
-        (click)="addTasinmaz()"
-        style="background-color: #2563eb; color: white; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 14px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); transition: background-color 0.2s ease; border: none; cursor: pointer;"
-        onmouseover="this.style.backgroundColor='#1d4ed8';"
-        onmouseout="this.style.backgroundColor='#2563eb';"
-      >
-        Taşınmaz Ekle
-      </button>
-      <!-- Seçilenleri Sil Butonu -->
-      <button
-        (click)="deleteSelectedTasinmazlar()"
-        style="background-color: #2563eb; color: white; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 14px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); transition: background-color 0.2s ease; border: none; cursor: pointer;"
+            (click)="exportSelectedToExcel()"
         [disabled]="selectedTasinmazIds.length === 0"
-        [style.opacity]="selectedTasinmazIds.length === 0 ? '0.5' : '1'"
-        [style.cursor]="selectedTasinmazIds.length === 0 ? 'not-allowed' : 'pointer'"
-        onmouseover="if (!this.disabled) { this.style.backgroundColor='#1d4ed8'; }"
-        onmouseout="if (!this.disabled) { this.style.backgroundColor='#2563eb'; }"
-      >
-        Sil ({{ selectedTasinmazIds.length }})
+            [class.opacity-50]="selectedTasinmazIds.length === 0"
+            [class.cursor-not-allowed]="selectedTasinmazIds.length === 0"
+            class="premium-btn btn-orange inline-flex items-center"
+          >
+            <svg class="w-4 h-4 mr-2 animate-icon" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+              <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+            </svg>
+            Seçilileri Aktar
+            <span class="ml-2 bg-white/30 text-xs px-2 py-0.5 rounded-full">{{ selectedTasinmazIds.length }}</span>
+          </button>
+          
+          <!-- 🟢 Tümünü Aktar Butonu -->
+          <button 
+            (click)="exportToExcel(true)"
+            class="premium-btn btn-emerald inline-flex items-center"
+          >
+            <svg class="w-4 h-4 mr-2 animate-icon" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+              <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd"></path>
+            </svg>
+            Tümünü Aktar
+          </button>
+          
+          <!-- 🔷 Dosya Seç Butonu -->
+          <button class="premium-btn btn-indigo inline-flex items-center">
+            <svg class="w-4 h-4 mr-2 animate-icon" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+              <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+            </svg>
+            Dosya Seç
+          </button>
+          
+          <!-- 🔵 Excel'den Aktar Butonu -->
+          <button class="premium-btn btn-teal inline-flex items-center">
+            <svg class="w-4 h-4 mr-2 animate-icon" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+              <path d="M5.5 13a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 13H11V9.413l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13H5.5z"></path>
+            </svg>
+            Excel'den Aktar
       </button>
       
-      <!-- Excel'e Aktar Butonu -->
+          <!-- 🌹 Toplu Silme Butonu -->
       <button
-        (click)="exportToExcel()"
-        style="background-color: #059669; color: white; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 14px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); transition: background-color 0.2s ease; border: none; cursor: pointer;"
-        onmouseover="this.style.backgroundColor='#047857';"
-        onmouseout="this.style.backgroundColor='#059669';"
-        title="Taşınmazları Excel'e Aktar"
-      >
-        📊 Excel'e Aktar
+        (click)="deleteSelectedTasinmazlar()"
+        [disabled]="selectedTasinmazIds.length === 0"
+            [class.opacity-50]="selectedTasinmazIds.length === 0"
+            [class.cursor-not-allowed]="selectedTasinmazIds.length === 0"
+            class="premium-btn btn-rose inline-flex items-center"
+          >
+            <svg class="w-4 h-4 mr-2 animate-icon" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+              <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+            </svg>
+            Toplu Silme
       </button>
-      <!-- Çıkış Yap Butonu -->
+          
+          <!-- 🔵 Yeni Taşınmaz Butonu -->
       <button
-        (click)="logout()"
-        style="background-color: #dc2626; color: white; padding: 8px 14px; border-radius: 6px; font-weight: 600; font-size: 14px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); transition: background-color 0.2s ease;"
-        onmouseover="this.style.backgroundColor='#b91c1c';"
-        onmouseout="this.style.backgroundColor='#dc2626';"
-      >
-        Çıkış
+            (click)="addTasinmaz()"
+            class="premium-btn btn-blue inline-flex items-center"
+          >
+            <svg class="w-4 h-4 mr-2 animate-icon" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+              <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"></path>
+            </svg>
+            Yeni Taşınmaz
       </button>
+          
+        </div>
     </div>
   </div>
 
@@ -58,44 +161,53 @@
     Taşınmazlar yükleniyor... Lütfen bekleyin.
   </div>
 
-  <!-- Taşınmazlar Tablosu -->
-  <div *ngIf="!loading && tasinmazlar.length > 0" class="overflow-x-auto bg-white rounded-xl shadow-lg p-6">
-    <table class="min-w-full leading-normal table-auto">
-      <thead>
-        <tr class="bg-gray-100 text-gray-700 uppercase text-sm font-semibold border-b-2 border-gray-300">
-          <th class="px-6 py-4 text-left tracking-wider">
-            <input type="checkbox" (change)="toggleSelectAll($event)" class="transform scale-110">
+  <!-- 🎪 Premium Taşınmazlar Tablosu -->
+  <div *ngIf="!loading && filteredTasinmazlar.length > 0" class="glass-card premium-table overflow-x-auto">
+    <table class="min-w-full">
+      <thead class="bg-gray-800 text-white">
+        <tr>
+          <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
+            <input type="checkbox" (change)="toggleSelectAll($event)" class="transform scale-110 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
           </th>
-          <th class="px-6 py-4 text-left tracking-wider">ID</th>
-          <th class="px-6 py-4 text-left tracking-wider">Ada</th>
-          <th class="px-6 py-4 text-left tracking-wider">Parsel</th>
-          <th class="px-6 py-4 text-left tracking-wider">Adres</th>
-          <th class="px-6 py-4 text-left tracking-wider">Koordinat</th>
-          <th class="px-6 py-4 text-left tracking-wider">Mahalle ID</th>
-          <th class="px-6 py-4 text-center tracking-wider">İşlemler</th>
+          <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Şehir</th>
+          <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">İlçe</th>
+          <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Mahalle</th>
+          <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Tür</th>
+          <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Parsel</th>
+          <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Pafta</th>
+          <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Adres</th>
+          <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Koordinat</th>
+          <th class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider">İşlemler</th>
         </tr>
       </thead>
-      <tbody>
-        <tr *ngFor="let tasinmaz of tasinmazlar" class="border-b border-gray-100 hover:bg-gray-50 transition duration-150 ease-in-out">
-          <td class="px-6 py-4 text-base text-gray-800 whitespace-nowrap">
+      <tbody class="bg-white divide-y divide-gray-200">
+        <tr *ngFor="let tasinmaz of paginatedTasinmazlar" class="hover:bg-gray-50">
+          <td class="px-4 py-3 text-sm text-gray-900">
             <input type="checkbox" 
                    [checked]="selectedTasinmazIds.includes(tasinmaz.id!)" 
                    (change)="onCheckboxChange(tasinmaz.id!, $event)"
-                   class="transform scale-110">
+                   class="transform scale-110 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
           </td>
-          <td class="px-6 py-4 text-base text-gray-800 whitespace-nowrap">{{ tasinmaz.id }}</td>
-          <td class="px-6 py-4 text-base text-gray-800 whitespace-nowrap">{{ tasinmaz.ada }}</td>
-          <td class="px-6 py-4 text-base text-gray-800 whitespace-nowrap">{{ tasinmaz.parsel }}</td>
-          <td class="px-6 py-4 text-base text-gray-800 whitespace-nowrap">{{ tasinmaz.adres }}</td>
-          <td class="px-6 py-4 text-base text-gray-800 whitespace-nowrap">{{ tasinmaz.koordinat }}</td>
-          <td class="px-6 py-4 text-base text-gray-800 whitespace-nowrap">{{ tasinmaz.mahalleId }}</td>
-          <td class="px-6 py-4 text-base text-gray-800 text-center">
-            <div class="flex items-center justify-center space-x-4">
-              <!-- Düzenle Butonu -->
-              <button (click)="editTasinmaz(tasinmaz.id!)"
-                      class="text-blue-600 hover:text-blue-800 transition duration-150 transform hover:scale-110 focus:outline-none"
-                      title="Taşınmazı Düzenle">
-                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+          <td class="px-4 py-3 text-sm text-gray-900">İstanbul</td>
+          <td class="px-4 py-3 text-sm text-gray-900">{{ tasinmaz.ada || 'Beşiktaş' }}</td>
+          <td class="px-4 py-3 text-sm text-gray-900">Levent</td>
+          <td class="px-4 py-3 text-sm">
+            <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">deneme{{ tasinmaz.id || '1' }}</span>
+          </td>
+          <td class="px-4 py-3 text-sm text-gray-900">{{ tasinmaz.parsel || 'deneme' }}</td>
+          <td class="px-4 py-3 text-sm text-gray-900">{{ tasinmaz.ada || 'deneme' }}</td>
+          <td class="px-4 py-3 text-sm text-gray-900">{{ tasinmaz.adres || 'deneme' }}</td>
+          <td class="px-4 py-3 text-sm text-gray-900">{{ tasinmaz.koordinat || '681717.2431154312.38...' }}</td>
+          <td class="px-4 py-3 text-center">
+            <div class="flex justify-center">
+                          <button
+              (click)="editTasinmaz(tasinmaz.id!)"
+              class="transition duration-150 transform hover:scale-110 focus:outline-none"
+              title="Taşınmazı Düzenle"
+              style="border: none; background: unset; color: #737373;">
+              <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+              </svg>
               </button>
             </div>
           </td>
@@ -104,10 +216,60 @@
     </table>
   </div>
 
+  <!-- Pagination UI -->
+  <div *ngIf="!loading && !error && filteredTasinmazlar.length > 0" class="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+    <!-- Toplam kayıt sayısı ve sayfa bilgisi -->
+    <div class="text-sm text-gray-700">
+      <span class="font-medium">{{ filteredTasinmazlar.length }}</span> kayıttan 
+      <span class="font-medium">{{ (currentPage - 1) * itemsPerPage + 1 }}</span> - 
+      <span class="font-medium">{{ Math.min(currentPage * itemsPerPage, filteredTasinmazlar.length) }}</span> 
+      arası gösteriliyor
+    </div>
+
+    <!-- Sayfa navigasyonu -->
+    <div class="flex items-center space-x-2">
+      <!-- Önceki sayfa butonu -->
+      <button 
+        (click)="goToPage(currentPage - 1)"
+        [disabled]="currentPage === 1"
+        class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
+      >
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+        </svg>
+      </button>
+
+      <!-- Sayfa numaraları -->
+      <ng-container *ngFor="let page of getPagesArray()">
+        <button 
+          (click)="goToPage(page)"
+          [ngClass]="{
+            'bg-blue-600 text-white border-blue-600': page === currentPage,
+            'bg-white text-gray-700 border-gray-300 hover:bg-gray-50': page !== currentPage
+          }"
+          class="px-3 py-2 text-sm font-medium border"
+        >
+          {{ page }}
+        </button>
+      </ng-container>
+
+      <!-- Sonraki sayfa butonu -->
+      <button 
+        (click)="goToPage(currentPage + 1)"
+        [disabled]="currentPage === totalPages"
+        class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
+      >
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+
   <!-- Taşınmaz Yok Mesajı -->
-  <div *ngIf="!loading && tasinmazlar.length === 0 && !error" class="text-center py-12 text-gray-600 bg-white rounded-xl shadow-lg">
-    <p class="text-xl font-semibold mb-4">Henüz hiç taşınmaz bulunmamaktadır.</p>
-    <p class="text-base">Yeni taşınmazlar eklendiğinde burada görüneceklerdir.</p>
+  <div *ngIf="!loading && filteredTasinmazlar.length === 0 && !error" class="text-center py-12 text-gray-600 bg-white rounded-xl shadow-lg">
+    <p class="text-xl font-semibold mb-4">Filtreye uygun taşınmaz bulunmamaktadır.</p>
+    <p class="text-base">Filtreleri değiştirmeyi deneyin veya yeni taşınmaz ekleyin.</p>
   </div>
 </div>
 
@@ -125,17 +287,17 @@
       <h3 class="text-lg font-semibold text-gray-900 mb-2">Silme Onayı</h3>
       <p class="mb-6 text-base text-gray-600 leading-relaxed">{{ modalMessage }}</p>
       
-      <div class="flex justify-center space-x-4">
+    <div class="flex justify-center space-x-4">
         <button 
           (click)="confirmAction()" 
           class="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition duration-200 font-semibold text-sm shadow-lg">
           Evet, Sil
-        </button>
+      </button>
         <button 
           (click)="closeModal()" 
           class="bg-gray-300 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-400 transition duration-200 font-semibold text-sm shadow-lg">
-          İptal
-        </button>
+        İptal
+      </button>
       </div>
     </div>
   </div>

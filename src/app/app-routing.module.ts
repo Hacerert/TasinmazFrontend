@@ -17,7 +17,7 @@ import { LogListComponent } from './log-list/log-list.component'; // LogListComp
 import { AuthGuard } from './guards/auth.guard';
 
 const routes: Routes = [
-  // Ana sayfa
+  // Ana sayfa - zorunlu login yönlendirmesi
   { path: '', redirectTo: '/login', pathMatch: 'full' },
 
   // Auth rotaları
@@ -29,6 +29,7 @@ const routes: Routes = [
   { path: 'admin/users/edit/:id', component: UserEditComponent, canActivate: [AuthGuard] },
   { path: 'admin/users/add', component: UserAddComponent, canActivate: [AuthGuard] },
   { path: 'logs', component: LogListComponent, canActivate: [AuthGuard] }, // LogListComponent için yeni rota
+  { path: 'admin/logs', component: LogListComponent, canActivate: [AuthGuard] }, // Admin logs route
 
   // Taşınmaz rotaları - AuthGuard ile korunuyor
   { path: 'tasinmazlar', component: TasinmazListComponent, canActivate: [AuthGuard] },

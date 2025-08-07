@@ -1,121 +1,40 @@
-<div class="min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
-  <div class="max-w-7xl mx-auto bg-white shadow-lg rounded-xl p-6 sm:p-8">
-
-    <!-- Başlık ve Butonlar (Küçültülmüş ve Sağ Üste Taşındı) -->
-    <div class="flex flex-col sm:flex-row justify-between items-center mb-6 border-b pb-4">
-      <h1 class="text-3xl font-extrabold text-gray-900 mb-4 sm:mb-0">Log Kayıtları</h1>
+<!-- Log Yönetimi - Proje Uyumlu Tasarım -->
+<div class="container mx-auto p-4 bg-gray-50 min-h-screen">
+  <div class="mb-4 border-b border-gray-200 pb-3">
+    <div class="flex justify-between items-center">
+      <h1 class="text-2xl font-bold text-gray-900">Log Kayıtları</h1>
       <div class="flex space-x-2">
-        <button
-          (click)="exportToExcel()"
-          class="bg-green-600 hover:bg-green-700 text-white font-semibold py-1.5 px-3 rounded-md shadow-sm transition duration-300 ease-in-out transform hover:scale-105 flex items-center text-sm"
-        >
-          <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"></path></svg>
-          Excel'e Aktar
-        </button>
-        <button
-          (click)="goBack()"
-          class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-1.5 px-3 rounded-md shadow-sm transition duration-300 ease-in-out transform hover:scale-105 flex items-center text-sm"
-        >
-          <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd"></path></svg>
-          Geri Dön
-        </button>
+        <!-- Kompakt Butonlar -->
+        <button (click)="exportSelectedToExcel()" [disabled]="selectedLogIds.length === 0" class="btn btn-sm btn-orange">📊 Seçilenleri Aktar ({{selectedLogIds.length}})</button>
+        <button (click)="exportToExcel(true)" class="btn btn-sm btn-green">📊 Tümünü Aktar</button>
+        <button (click)="goBack()" class="btn btn-sm btn-blue">← Geri</button>
       </div>
     </div>
 
-    <!-- Filtreleme Alanı (Çerçeveli, Yan Yana ve Kompakt) -->
-    <div class="mb-6 p-4 bg-white rounded-lg shadow-md border border-gray-200"> <!-- Çerçeve eklendi -->
-      <div class="flex flex-wrap items-end gap-x-4 gap-y-3"> <!-- gap-x ile yatay boşluk, gap-y ile dikey boşluk -->
-        <h2 class="text-xl font-bold text-gray-800 flex-shrink-0 mr-4">Filtre:</h2>
-
-        <!-- Durum Filtresi -->
-        <div class="flex-1 min-w-[120px] max-w-[180px]"> <!-- Esnek ve minimum/maksimum genişlikler -->
-          <label for="filterStatus" class="block text-xs font-medium text-gray-600 mb-0.5">Durum</label>
-          <select
-            id="filterStatus"
-            [(ngModel)]="filterStatus"
-            class="p-2 border border-gray-300 rounded-md w-full focus:ring-blue-500 focus:border-blue-500 shadow-sm text-sm bg-white"
-          >
-            <option value="">Seçiniz</option>
-            <option *ngFor="let status of availableStatuses" [value]="status">{{ status }}</option>
-          </select>
-        </div>
-
-        <!-- İşlem Türü Filtresi -->
-        <div class="flex-1 min-w-[120px] max-w-[180px]">
-          <label for="filterActionType" class="block text-xs font-medium text-gray-600 mb-0.5">İşlem Türü</label>
-          <select
-            id="filterActionType"
-            [(ngModel)]="filterActionType"
-            class="p-2 border border-gray-300 rounded-md w-full focus:ring-blue-500 focus:border-blue-500 shadow-sm text-sm bg-white"
-          >
-            <option value="">Seçiniz</option>
-            <option *ngFor="let action of availableActionTypes" [value]="action">{{ action }}</option>
-          </select>
-        </div>
-
-        <!-- Kullanıcı ID Filtresi -->
-        <div class="flex-1 min-w-[120px] max-w-[180px]">
-          <label for="filterUserId" class="block text-xs font-medium text-gray-600 mb-0.5">Kullanıcı ID</label>
-          <input
-            id="filterUserId"
-            type="text"
-            [(ngModel)]="filterUserId"
-            placeholder="Seçiniz"
-            class="p-2 border border-gray-300 rounded-md w-full focus:ring-blue-500 focus:border-blue-500 shadow-sm text-sm"
-          />
-        </div>
-
-        <!-- IP Adresi Filtresi -->
-        <div class="flex-1 min-w-[120px] max-w-[180px]">
-          <label for="filterIpAddress" class="block text-xs font-medium text-gray-600 mb-0.5">IP Adresi</label>
-          <input
-            id="filterIpAddress"
-            type="text"
-            [(ngModel)]="filterIpAddress"
-            placeholder="Seçiniz"
-            class="p-2 border border-gray-300 rounded-md w-full focus:ring-blue-500 focus:border-blue-500 shadow-sm text-sm"
-          />
-        </div>
-
-        <!-- Başlangıç Tarihi -->
-        <div class="flex-1 min-w-[120px] max-w-[180px]">
-          <label for="filterStartDate" class="block text-xs font-medium text-gray-600 mb-0.5">Başlangıç Tarihi</label>
-          <input
-            id="filterStartDate"
-            type="date"
-            [(ngModel)]="filterStartDate"
-            class="p-2 border border-gray-300 rounded-md w-full focus:ring-blue-500 focus:border-blue-500 shadow-sm text-sm"
-          />
-        </div>
-
-        <!-- Bitiş Tarihi -->
-        <div class="flex-1 min-w-[120px] max-w-[180px]">
-          <label for="filterEndDate" class="block text-xs font-medium text-gray-600 mb-0.5">Bitiş Tarihi</label>
-          <input
-            id="filterEndDate"
-            type="date"
-            [(ngModel)]="filterEndDate"
-            class="p-2 border border-gray-300 rounded-md w-full focus:ring-blue-500 focus:border-blue-500 shadow-sm text-sm"
-          />
-        </div>
-
-        <!-- Uygula ve Temizle Butonları -->
-        <div class="flex-shrink-0 mt-auto flex space-x-2">
-          <button
-            (click)="applyFilters()"
-            class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md shadow-sm transition duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center text-sm"
-          >
-            Uygula
-          </button>
-          <button
-            (click)="clearFilters()"
-            class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-md shadow-sm transition duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center text-sm"
-          >
-            Temizle
-          </button>
-        </div>
+  <!-- Kompakt Filtre -->
+  <div class="compact-filter mb-3">
+    <div class="flex items-center p-3 bg-white border border-gray-200 rounded">
+      <!-- Tek Satırda Tüm Filtreler -->
+      <div class="flex items-center space-x-3 flex-1">
+        <select [(ngModel)]="filterActionType" class="compact-select">
+          <option value="">İşlem</option>
+          <option *ngFor="let action of availableActionTypes" [value]="action">{{ action }}</option>
+        </select>
+        
+        <select [(ngModel)]="filterStatus" class="compact-select">
+          <option value="">Durum</option>
+          <option *ngFor="let status of availableStatuses" [value]="status">{{ status }}</option>
+        </select>
+        
+        <input [(ngModel)]="filterIpAddress" placeholder="IP" class="compact-input">
+        <input [(ngModel)]="filterStartDate" type="date" class="compact-input">
+        <input [(ngModel)]="filterUserId" placeholder="Kullanıcı" class="compact-input">
+        
+        <button (click)="applyFilters()" class="btn btn-sm btn-blue">🔍</button>
+        <button (click)="clearFilters()" class="btn btn-sm btn-gray">✕</button>
       </div>
     </div>
+  </div>
 
     <!-- Yükleniyor Durumu -->
     <div *ngIf="isLoading" class="flex justify-center items-center h-48">
@@ -135,46 +54,77 @@
       <span class="block sm:inline ml-2">Gösterilecek log kaydı bulunamadı. Filtreleri temizleyebilir veya yeni loglar ekleyebilirsiniz.</span>
     </div>
 
-    <!-- Log Tablosu -->
-    <div *ngIf="!isLoading && !error && filteredLogs.length > 0" class="overflow-x-auto rounded-lg shadow-md">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-          <tr>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kullanıcı Adı</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rol</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Durum</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">İşlem Türü</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Açıklama</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tarih</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Saat</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP Adresi</th>
+  <!-- Premium Log Tablosu - Taşınmaz Uyumlu -->
+  <div *ngIf="!isLoading && !error && filteredLogs.length > 0" class="glass-card premium-table-container overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="premium-table">
+        <thead>
+          <tr class="premium-table-header">
+            <th class="px-4 py-3 text-left">
+              <input type="checkbox" (change)="toggleSelectAll($event)" class="premium-checkbox">
+            </th>
+            <th class="px-4 py-3 text-left font-semibold text-slate-800">ID</th>
+            <th class="px-4 py-3 text-left font-semibold text-slate-800">Kullanıcı</th>
+            <th class="px-4 py-3 text-left font-semibold text-slate-800">Email</th>
+            <th class="px-4 py-3 text-left font-semibold text-slate-800">Rol</th>
+            <th class="px-4 py-3 text-left font-semibold text-slate-800">Durum</th>
+            <th class="px-4 py-3 text-left font-semibold text-slate-800">İşlem</th>
+            <th class="px-4 py-3 text-left font-semibold text-slate-800">Açıklama</th>
+            <th class="px-4 py-3 text-left font-semibold text-slate-800">Tarih</th>
+            <th class="px-4 py-3 text-left font-semibold text-slate-800">Saat</th>
+            <th class="px-4 py-3 text-left font-semibold text-slate-800">IP</th>
           </tr>
         </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
-          <tr *ngFor="let log of filteredLogs" class="hover:bg-gray-50">
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ log.id }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ log.user?.userName || 'Bilinmiyor' }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ log.user?.email || '-' }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ log.user?.role || '-' }}</td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <span [ngClass]="getStatusClass(log.status)" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
+        <tbody class="premium-table-body">
+          <tr *ngFor="let log of paginatedLogs; let i = index" 
+              [class]="i % 2 === 0 ? 'premium-table-row-even' : 'premium-table-row-odd'"
+              class="premium-table-row">
+            <td class="px-4 py-3">
+              <input type="checkbox" 
+                     [checked]="selectedLogIds.includes(log.id)" 
+                     (change)="onCheckboxChange(log.id, $event)"
+                     class="premium-checkbox">
+            </td>
+            <td class="px-4 py-3 font-medium text-slate-900">{{ log.id }}</td>
+            <td class="px-4 py-3 text-slate-800">{{ log.user?.userName || 'Bilinmiyor' }}</td>
+            <td class="px-4 py-3 text-slate-600">{{ log.user?.email || '-' }}</td>
+            <td class="px-4 py-3">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                    [class]="log.user?.role === 'Admin' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'">
+                {{ log.user?.role || '-' }}
+              </span>
+            </td>
+            <td class="px-4 py-3">
+              <span [ngClass]="getStatusClass(log.status)" class="px-2.5 py-0.5 text-xs font-medium rounded-full">
                 {{ log.status }}
               </span>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <span [ngClass]="getActionClass(log.actionType)" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
+            <td class="px-4 py-3">
+              <span [ngClass]="getActionClass(log.actionType)" class="px-2.5 py-0.5 text-xs font-medium rounded-full">
                 {{ log.actionType }}
               </span>
             </td>
-            <td class="px-6 py-4 whitespace-normal text-sm text-gray-800 max-w-xs overflow-hidden text-ellipsis">{{ log.description }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ log.createdAt | date:'dd/MM/yyyy' }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ log.createdAt | date:'HH:mm:ss' }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ log.ipAddress }}</td>
+            <td class="px-4 py-3 max-w-xs truncate text-slate-600">{{ log.description }}</td>
+            <td class="px-4 py-3 text-slate-700 font-mono text-sm">{{ log.createdAt | date:'dd/MM/yyyy' }}</td>
+            <td class="px-4 py-3 text-slate-700 font-mono text-sm">{{ log.createdAt | date:'HH:mm:ss' }}</td>
+            <td class="px-4 py-3 text-slate-600 font-mono text-sm">{{ log.ipAddress }}</td>
           </tr>
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- Kompakt Pagination -->
+  <div *ngIf="!isLoading && !error && filteredLogs.length > 0" class="mt-4 flex justify-between items-center text-sm">
+    <div class="text-gray-700">
+      {{ filteredLogs.length }} kayıttan {{ (currentPage - 1) * itemsPerPage + 1 }}-{{ Math.min(currentPage * itemsPerPage, filteredLogs.length) }} arası
+    </div>
+    <div class="flex space-x-1">
+      <button (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1" class="btn btn-sm btn-gray">‹</button>
+      <ng-container *ngFor="let page of getPagesArray()">
+        <button (click)="goToPage(page)" [class]="page === currentPage ? 'btn btn-sm btn-blue' : 'btn btn-sm btn-gray'">{{ page }}</button>
+      </ng-container>
+      <button (click)="goToPage(currentPage + 1)" [disabled]="currentPage === totalPages" class="btn btn-sm btn-gray">›</button>
     </div>
   </div>
 </div>
