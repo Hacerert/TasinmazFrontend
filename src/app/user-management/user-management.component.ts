@@ -22,10 +22,16 @@ interface User {
 })
 export class UserManagementComponent implements OnInit, OnDestroy {
   users: User[] = [];
+  filteredUsers: User[] = []; // Filtrelenmiş kullanıcılar
   loading: boolean = true;
   error: string | null = null;
   selectedUserIds: number[] = [];
   private userRoleSubscription: Subscription | undefined;
+
+  // Filtreleme değişkenleri
+  filterUsername: string = '';
+  filterEmail: string = '';
+  filterRole: string = '';
 
   constructor(
     private userService: UserService,
@@ -55,6 +61,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     this.userService.getAllUsers().subscribe({
       next: (data: User[]) => {
         this.users = data;
+        this.filteredUsers = [...data]; // Filtrelenmiş listeyi başlat
         this.loading = false;
         console.log('Kullanıcılar başarıyla yüklendi:', this.users);
       },
@@ -68,6 +75,34 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         }
       }
     });
+  }
+
+  /**
+   * Filtreleri uygular
+   */
+  applyFilters(): void {
+    this.filteredUsers = this.users.filter(user => {
+      const usernameMatch = !this.filterUsername || 
+        user.userName.toLowerCase().includes(this.filterUsername.toLowerCase());
+      
+      const emailMatch = !this.filterEmail || 
+        (user.email && user.email.toLowerCase().includes(this.filterEmail.toLowerCase()));
+      
+      const roleMatch = !this.filterRole || 
+        user.role.toLowerCase().includes(this.filterRole.toLowerCase());
+      
+      return usernameMatch && emailMatch && roleMatch;
+    });
+  }
+
+  /**
+   * Filtreleri temizler
+   */
+  clearFilters(): void {
+    this.filterUsername = '';
+    this.filterEmail = '';
+    this.filterRole = '';
+    this.filteredUsers = [...this.users];
   }
 
   deleteUser(userId: number): void {
@@ -129,8 +164,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   // Checkbox işlemleri için yeni metodlar
   toggleSelectAll(event: any): void {
     if (event.target.checked) {
-      // Tümünü seç
-      this.selectedUserIds = this.users.map(user => user.id!);
+      // Filtrelenmiş kullanıcıların tümünü seç
+      this.selectedUserIds = this.filteredUsers.map(user => user.id!);
     } else {
       // Tümünü temizle
       this.selectedUserIds = [];
@@ -201,8 +236,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Seçilen kullanıcıları filtrele
-    const selectedUsers = this.users.filter(user => this.selectedUserIds.includes(user.id));
+    // Seçilen kullanıcıları filtrele (filteredUsers'dan)
+    const selectedUsers = this.filteredUsers.filter(user => this.selectedUserIds.includes(user.id!));
 
     const data = selectedUsers.map((user, index) => ({
       'Sıra No': index + 1,

@@ -48,6 +48,11 @@ export class TasinmazEditComponent implements OnInit, AfterViewInit, OnDestroy {
   polygonArea: number = 0;
   currentPolygon: Feature | null = null;
 
+  // Photo state (local-only preview)
+  selectedPhotoFile: File | null = null;
+  photoPreview: string | null = null;
+  photoError: string | null = null;
+
   constructor(
     private fb: FormBuilder, 
     private router: Router,
@@ -418,6 +423,38 @@ export class TasinmazEditComponent implements OnInit, AfterViewInit, OnDestroy {
         this.error = 'Taşınmaz güncellenirken bir hata oluştu: ' + (err.error?.message || err.message);
       }
     });
+  }
+
+  // ====== PHOTO HANDLERS ======
+  onPhotoSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) {
+      this.selectedPhotoFile = null;
+      this.photoPreview = null;
+      return;
+    }
+    const file = input.files[0];
+    const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+    if (!validTypes.includes(file.type)) {
+      this.photoError = 'Lütfen JPEG veya PNG formatında bir görsel seçin.';
+      this.selectedPhotoFile = null;
+      this.photoPreview = null;
+      return;
+    }
+    const maxBytes = 2 * 1024 * 1024;
+    if (file.size > maxBytes) {
+      this.photoError = 'Dosya boyutu 2 MB üzerinde. Lütfen daha küçük bir dosya seçin.';
+      this.selectedPhotoFile = null;
+      this.photoPreview = null;
+      return;
+    }
+    this.photoError = null;
+    this.selectedPhotoFile = file;
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.photoPreview = reader.result as string;
+    };
+    reader.readAsDataURL(file);
   }
 
   goBack(): void {

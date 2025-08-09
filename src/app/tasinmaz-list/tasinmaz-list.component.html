@@ -6,7 +6,17 @@
     <div class="mb-4 border-b border-gray-200 pb-3">
       <div class="flex justify-between items-center">
         <h1 class="text-2xl font-bold text-gray-900">Taşınmaz Yönetimi</h1>
-        <button (click)="goBackToAdmin()" class="btn btn-sm btn-blue px-4 py-2 font-semibold">← Geri Dön</button>
+        <div class="flex space-x-2">
+          <button (click)="goBackToAdmin()" class="btn btn-sm btn-blue px-4 py-2 font-semibold">← Geri Dön</button>
+          <button (click)="logout()" class="btn btn-sm btn-red px-4 py-2 font-semibold">🚪 Çıkış Yap</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Harita (Başlığın altında, filtrelerin üstünde) -->
+    <div class="mb-4">
+      <div class="glass-card" style="height: 360px; overflow: hidden;">
+        <div id="listMap" style="width: 100%; height: 100%;"></div>
       </div>
     </div>
 
@@ -79,10 +89,11 @@
       <div class="p-3">
         <div class="flex flex-wrap gap-3 justify-center">
           
-          <!-- 🟠 Seçilileri Aktar Butonu -->
-      <button
+          <!-- 🟠 Seçilileri Aktar Butonu - Sadece Admin Olmayan -->
+          <button
+            *ngIf="!isAdmin"
             (click)="exportSelectedToExcel()"
-        [disabled]="selectedTasinmazIds.length === 0"
+            [disabled]="selectedTasinmazIds.length === 0"
             [class.opacity-50]="selectedTasinmazIds.length === 0"
             [class.cursor-not-allowed]="selectedTasinmazIds.length === 0"
             class="premium-btn btn-orange inline-flex items-center"
@@ -91,6 +102,22 @@
               <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"></path>
             </svg>
             Seçilileri Aktar
+            <span class="ml-2 bg-white/30 text-xs px-2 py-0.5 rounded-full">{{ selectedTasinmazIds.length }}</span>
+          </button>
+          
+          <!-- 🟠 Seçilileri Aktar Butonu - Sadece Admin -->
+          <button
+            *ngIf="isAdmin"
+            (click)="exportSelectedToExcel()"
+            [disabled]="selectedTasinmazIds.length === 0"
+            [class.opacity-50]="selectedTasinmazIds.length === 0"
+            [class.cursor-not-allowed]="selectedTasinmazIds.length === 0"
+            class="premium-btn btn-orange inline-flex items-center"
+          >
+            <svg class="w-4 h-4 mr-2 animate-icon" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+              <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+            </svg>
+            Seçilenleri Aktar
             <span class="ml-2 bg-white/30 text-xs px-2 py-0.5 rounded-full">{{ selectedTasinmazIds.length }}</span>
           </button>
           
@@ -105,26 +132,27 @@
             Tümünü Aktar
           </button>
           
-          <!-- 🔷 Dosya Seç Butonu -->
-          <button class="premium-btn btn-indigo inline-flex items-center">
+          <!-- 🔷 Dosya Seç Butonu - Sadece Admin -->
+          <button *ngIf="!isAdmin" class="premium-btn btn-indigo inline-flex items-center">
             <svg class="w-4 h-4 mr-2 animate-icon" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
               <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
             </svg>
             Dosya Seç
           </button>
           
-          <!-- 🔵 Excel'den Aktar Butonu -->
-          <button class="premium-btn btn-teal inline-flex items-center">
+          <!-- 🔵 Excel'den Aktar Butonu - Sadece Admin -->
+          <button *ngIf="!isAdmin" class="premium-btn btn-teal inline-flex items-center">
             <svg class="w-4 h-4 mr-2 animate-icon" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
               <path d="M5.5 13a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 13H11V9.413l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13H5.5z"></path>
             </svg>
             Excel'den Aktar
-      </button>
+          </button>
       
-          <!-- 🌹 Toplu Silme Butonu -->
-      <button
-        (click)="deleteSelectedTasinmazlar()"
-        [disabled]="selectedTasinmazIds.length === 0"
+          <!-- 🌹 Toplu Silme Butonu - Sadece Admin -->
+          <button
+            *ngIf="!isAdmin"
+            (click)="deleteSelectedTasinmazlar()"
+            [disabled]="selectedTasinmazIds.length === 0"
             [class.opacity-50]="selectedTasinmazIds.length === 0"
             [class.cursor-not-allowed]="selectedTasinmazIds.length === 0"
             class="premium-btn btn-rose inline-flex items-center"
@@ -133,10 +161,11 @@
               <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
             </svg>
             Toplu Silme
-      </button>
+          </button>
           
-          <!-- 🔵 Yeni Taşınmaz Butonu -->
-      <button
+          <!-- 🔵 Yeni Taşınmaz Butonu - Sadece Admin -->
+          <button
+            *ngIf="!isAdmin"
             (click)="addTasinmaz()"
             class="premium-btn btn-blue inline-flex items-center"
           >
@@ -144,7 +173,7 @@
               <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"></path>
             </svg>
             Yeni Taşınmaz
-      </button>
+          </button>
           
         </div>
     </div>
@@ -165,9 +194,9 @@
   <div *ngIf="!loading && filteredTasinmazlar.length > 0" class="glass-card premium-table overflow-x-auto">
     <table class="min-w-full">
       <thead class="bg-gray-800 text-white">
-        <tr>
-          <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
-            <input type="checkbox" (change)="toggleSelectAll($event)" class="transform scale-110 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+        <tr class="bg-gray-100 text-gray-700 text-xs uppercase font-medium">
+          <th class="px-3 py-2 text-left">
+            <input type="checkbox" (change)="toggleSelectAll($event)">
           </th>
           <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Şehir</th>
           <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">İlçe</th>
@@ -200,14 +229,15 @@
           <td class="px-4 py-3 text-sm text-gray-900">{{ tasinmaz.koordinat || '681717.2431154312.38...' }}</td>
           <td class="px-4 py-3 text-center">
             <div class="flex justify-center">
-                          <button
-              (click)="editTasinmaz(tasinmaz.id!)"
-              class="transition duration-150 transform hover:scale-110 focus:outline-none"
-              title="Taşınmazı Düzenle"
-              style="border: none; background: unset; color: #737373;">
-              <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-              </svg>
+              <button
+                *ngIf="!isAdmin"
+                (click)="editTasinmaz(tasinmaz.id!)"
+                class="transition duration-150 transform hover:scale-110 focus:outline-none"
+                title="Taşınmazı Düzenle"
+                style="border: none; background: unset; color: #737373;">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                </svg>
               </button>
             </div>
           </td>

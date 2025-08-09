@@ -89,6 +89,17 @@
         </div>
       </div>
 
+      <!-- Fotoğraf (Dosya Seç) -->
+      <div class="full-width">
+        <label for="photoFile">Fotoğraf</label>
+        <input id="photoFile" type="file" accept="image/*" (change)="onPhotoSelected($event)" [disabled]="loading" />
+        <small class="hint">Max 2 MB, JPEG/PNG</small>
+        <div class="error-msg" *ngIf="photoError">{{ photoError }}</div>
+        <div class="photo-preview" *ngIf="photoPreview">
+          <img [src]="photoPreview" alt="Önizleme" />
+        </div>
+      </div>
+
       <!-- OpenLayers Harita -->
       <div class="map-container">
         <label class="map-label">Konum</label>

@@ -1,17 +1,28 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { TasinmazListDto, TasinmazService } from '../services/tasinmaz.service';
 import { AuthService } from '../services/auth.service';
 import { firstValueFrom } from 'rxjs';
 import { DatePipe } from '@angular/common';
 import * as XLSX from 'xlsx';
+// OpenLayers imports
+import Map from 'ol/Map';
+import View from 'ol/View';
+import TileLayer from 'ol/layer/Tile';
+import VectorLayer from 'ol/layer/Vector';
+import VectorSource from 'ol/source/Vector';
+import OSM from 'ol/source/OSM';
+import Feature from 'ol/Feature';
+import { Polygon } from 'ol/geom';
+import { transform } from 'ol/proj';
+import { Style, Stroke, Fill } from 'ol/style';
 
 @Component({
   selector: 'app-tasinmaz-list',
   templateUrl: './tasinmaz-list.component.html',
   styleUrls: ['./tasinmaz-list.component.css']
 })
-export class TasinmazListComponent implements OnInit {
+export class TasinmazListComponent implements OnInit, AfterViewInit {
 
   tasinmazlar: TasinmazListDto[] = [];
   filteredTasinmazlar: TasinmazListDto[] = [];
@@ -21,6 +32,10 @@ export class TasinmazListComponent implements OnInit {
   showModal: boolean = false;
   modalMessage: string = '';
   modalCallback: Function | null = null;
+
+  // Kullanıcı rolü kontrolü
+  isAdmin: boolean = false;
+  userRole: string = '';
 
   // Filtreleme değişkenleri
   filterSehir: string = '';
@@ -46,6 +61,12 @@ export class TasinmazListComponent implements OnInit {
   // Math referansı template'de kullanmak için
   Math = Math;
 
+  // Map state
+  listMap!: Map;
+  listVectorSource!: VectorSource;
+  listVectorLayer!: VectorLayer<VectorSource>;
+  mapInitialized: boolean = false;
+
   constructor(
     private tasinmazService: TasinmazService,
     private router: Router,
@@ -54,7 +75,22 @@ export class TasinmazListComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
+    this.checkUserRole();
     this.getTasinmazlar();
+  }
+
+  ngAfterViewInit(): void {
+    // map container render after view init
+    setTimeout(() => this.initMap(), 0);
+  }
+
+  /**
+   * Kullanıcı rolünü kontrol eder
+   */
+  checkUserRole(): void {
+    this.userRole = this.authService.getUserRole() || '';
+    this.isAdmin = this.userRole === 'Admin';
+    console.log('👤 Kullanıcı rolü:', this.userRole, 'Admin mi:', this.isAdmin);
   }
 
   /**
@@ -69,6 +105,7 @@ export class TasinmazListComponent implements OnInit {
         this.populateFilterOptions(); // Filtre seçeneklerini oluştur
         this.loading = false;
         this.error = null;
+        this.updateMapFeatures();
       },
       error: (e) => {
         this.error = 'Taşınmazlar yüklenirken bir hata oluştu.';
@@ -193,6 +230,7 @@ export class TasinmazListComponent implements OnInit {
 
     this.filteredTasinmazlar = filtered;
     this.currentPage = 1; // Filtreler uygulandığında sayfayı sıfırla
+    this.updateMapFeatures();
   }
 
   /**
@@ -210,11 +248,96 @@ export class TasinmazListComponent implements OnInit {
     this.filterAda = '';
     this.filteredTasinmazlar = [...this.tasinmazlar];
     this.currentPage = 1; // Filtreleri temizledikten sonra sayfayı sıfırla
+    this.updateMapFeatures();
   }
 
   // Sayfalama için getter'lar ve metodlar
   get totalPages(): number {
     return Math.ceil(this.filteredTasinmazlar.length / this.itemsPerPage);
+  }
+
+  // ===== Map helpers =====
+  private initMap(): void {
+    const mapElement = document.getElementById('listMap');
+    if (!mapElement || this.mapInitialized) {
+      return;
+    }
+
+    try {
+      this.listVectorSource = new VectorSource();
+      this.listVectorLayer = new VectorLayer({
+        source: this.listVectorSource,
+        style: new Style({
+          stroke: new Stroke({ color: '#3b82f6', width: 2 }),
+          fill: new Fill({ color: 'rgba(59,130,246,0.15)' })
+        })
+      });
+
+      this.listMap = new Map({
+        target: 'listMap',
+        layers: [
+          new TileLayer({ source: new OSM() }),
+          this.listVectorLayer
+        ],
+        view: new View({
+          center: transform([35.0, 39.0], 'EPSG:4326', 'EPSG:3857'),
+          zoom: 5
+        })
+      });
+
+      this.mapInitialized = true;
+      this.updateMapFeatures();
+    } catch (e) {
+      console.error('Liste haritası initialize edilemedi:', e);
+    }
+  }
+
+  private updateMapFeatures(): void {
+    if (!this.mapInitialized || !this.listVectorSource) return;
+    this.listVectorSource.clear();
+
+    const features: Feature[] = [];
+    for (const t of this.filteredTasinmazlar) {
+      if (!t.koordinat) continue;
+      const polygon = this.parsePolygonFromCoordString(t.koordinat);
+      if (polygon) {
+        features.push(new Feature(polygon));
+      }
+    }
+
+    if (features.length > 0) {
+      this.listVectorSource.addFeatures(features);
+      // fit view to features
+      const extent = this.listVectorSource.getExtent();
+      try {
+        this.listMap.getView().fit(extent, { padding: [30, 30, 30, 30], maxZoom: 15, duration: 300 });
+      } catch {}
+    } else {
+      // fallback center on TR
+      this.listMap.getView().setCenter(transform([35.0, 39.0], 'EPSG:4326', 'EPSG:3857'));
+      this.listMap.getView().setZoom(5);
+    }
+  }
+
+  private parsePolygonFromCoordString(coordString: string): Polygon | null {
+    try {
+      const pairs = coordString.split(';').map(p => p.trim()).filter(Boolean);
+      if (pairs.length < 3) return null;
+      const coords = pairs.map(pair => {
+        const [latStr, lngStr] = pair.split(',');
+        const lat = Number(latStr);
+        const lng = Number(lngStr);
+        return [lng, lat] as [number, number];
+      });
+      if (coords[0][0] !== coords[coords.length - 1][0] || coords[0][1] !== coords[coords.length - 1][1]) {
+        coords.push(coords[0]);
+      }
+      const webMercator = coords.map(c => transform(c, 'EPSG:4326', 'EPSG:3857')) as [number, number][];
+      return new Polygon([webMercator]);
+    } catch (e) {
+      console.warn('Koordinat parse hatası:', e);
+      return null;
+    }
   }
 
   get paginatedTasinmazlar(): any[] {

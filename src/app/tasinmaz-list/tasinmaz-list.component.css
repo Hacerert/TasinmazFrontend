@@ -64,6 +64,9 @@
 .btn-gray { background: #6b7280; color: white; }
 .btn-gray:hover { background: #4b5563; }
 
+.btn-red { background: #ef4444; color: white; }
+.btn-red:hover { background: #dc2626; }
+
 /* ✨ Clean Modern Background */
 .premium-background {
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
