@@ -28,6 +28,7 @@ export class TasinmazListComponent implements OnInit, AfterViewInit {
   filteredTasinmazlar: TasinmazListDto[] = [];
   loading: boolean = true;
   error: string | null = null;
+  successMessage: string | null = null;
   selectedTasinmazIds: number[] = [];
   showModal: boolean = false;
   modalMessage: string = '';
@@ -545,6 +546,266 @@ export class TasinmazListComponent implements OnInit, AfterViewInit {
 
   exportSelectedToExcel(): void {
     this.exportToExcel(false);
+  }
+
+  // ====== EXCEL IMPORT METODLARI ======
+  
+  /**
+   * Excel dosyasından veri aktarır
+   */
+  importFromExcel(event: any): void {
+    console.log('📥 Excel import başlatılıyor...');
+    
+    const file = event.target.files[0];
+    if (!file) {
+      console.log('⚠️ Dosya seçilmedi');
+      return;
+    }
+
+    // Dosya tipini kontrol et
+    const validTypes = [
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+      'application/vnd.ms-excel', // .xls
+      'application/vnd.ms-excel.sheet.macroEnabled.12' // .xlsm
+    ];
+
+    if (!validTypes.includes(file.type)) {
+      this.error = 'Lütfen geçerli bir Excel dosyası seçin (.xlsx, .xls)';
+      console.error('❌ Geçersiz dosya tipi:', file.type);
+      // 5 saniye sonra error message'ı temizle
+      setTimeout(() => {
+        this.error = null;
+      }, 5000);
+      return;
+    }
+
+    // Dosya boyutunu kontrol et (max 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      this.error = 'Dosya boyutu 10MB\'dan büyük olamaz';
+      console.error('❌ Dosya boyutu çok büyük:', file.size);
+      // 5 saniye sonra error message'ı temizle
+      setTimeout(() => {
+        this.error = null;
+      }, 5000);
+      return;
+    }
+
+    console.log('✅ Dosya seçildi:', file.name, 'Boyut:', file.size, 'Tip:', file.type);
+
+    // FileReader ile dosyayı oku
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        
+        console.log('📊 Excel workbook okundu, sheet sayısı:', workbook.SheetNames.length);
+        
+        // İlk sheet'i al
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        
+        console.log('📋 İlk sheet:', firstSheetName);
+        
+        // JSON'a çevir
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        
+        console.log('📋 JSON verisi:', jsonData);
+        
+        // Veriyi işle
+        this.processExcelData(jsonData);
+        
+      } catch (error) {
+        console.error('❌ Excel okuma hatası:', error);
+        this.error = 'Excel dosyası okunamadı: ' + (error as any).message;
+        // 5 saniye sonra error message'ı temizle
+        setTimeout(() => {
+          this.error = null;
+        }, 5000);
+      }
+    };
+
+    reader.onerror = () => {
+      console.error('❌ Dosya okuma hatası');
+      this.error = 'Dosya okunamadı';
+      // 5 saniye sonra error message'ı temizle
+      setTimeout(() => {
+        this.error = null;
+      }, 5000);
+    };
+
+    reader.readAsArrayBuffer(file);
+  }
+
+  /**
+   * Excel verisini işler ve taşınmaz listesine ekler
+   */
+  private processExcelData(data: any[]): void {
+    console.log('🔍 Excel verisi işleniyor...');
+    
+    if (data.length < 2) {
+      this.error = 'Excel dosyası en az 2 satır içermelidir (başlık + veri)';
+      // 5 saniye sonra error message'ı temizle
+      setTimeout(() => {
+        this.error = null;
+      }, 5000);
+      return;
+    }
+
+    // İlk satır başlık olmalı
+    const headers = data[0] as string[];
+    console.log('📋 Başlıklar:', headers);
+
+    // Gerekli kolonları kontrol et
+    const requiredColumns = ['ada', 'parsel', 'adres', 'koordinat', 'tasinmazTipi'];
+    const missingColumns = requiredColumns.filter(col => 
+      !headers.some(header => header?.toLowerCase().includes(col.toLowerCase()))
+    );
+
+    if (missingColumns.length > 0) {
+      this.error = `Eksik kolonlar: ${missingColumns.join(', ')}`;
+      console.error('❌ Eksik kolonlar:', missingColumns);
+      // 5 saniye sonra error message'ı temizle
+      setTimeout(() => {
+        this.error = null;
+      }, 5000);
+      return;
+    }
+
+    // Veri satırlarını işle
+    const newTasinmazlar: any[] = [];
+    
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i] as any[];
+      if (row.length === 0 || !row.some(cell => cell)) continue; // Boş satırları atla
+
+      try {
+        const tasinmaz = this.parseExcelRow(headers, row);
+        if (tasinmaz) {
+          newTasinmazlar.push(tasinmaz);
+        }
+      } catch (error) {
+        console.error(`❌ Satır ${i + 1} işlenirken hata:`, error);
+      }
+    }
+
+    console.log('✅ İşlenen taşınmaz sayısı:', newTasinmazlar.length);
+
+    if (newTasinmazlar.length > 0) {
+      // Kullanıcıya onay sor
+      this.openModal(
+        `${newTasinmazlar.length} adet taşınmaz bulundu. Eklemek istiyor musunuz?`,
+        () => this.addImportedTasinmazlar(newTasinmazlar)
+      );
+    } else {
+      this.error = 'Excel dosyasından geçerli veri bulunamadı';
+      // 5 saniye sonra error message'ı temizle
+      setTimeout(() => {
+        this.error = null;
+      }, 5000);
+    }
+  }
+
+  /**
+   * Excel satırını parse eder
+   */
+  private parseExcelRow(headers: string[], row: any[]): any | null {
+    try {
+      const tasinmaz: any = {};
+      
+      headers.forEach((header, index) => {
+        if (header && row[index] !== undefined) {
+          const value = row[index];
+          
+          // Header'ı normalize et
+          const normalizedHeader = header.toLowerCase().trim();
+          
+          if (normalizedHeader.includes('ada')) {
+            tasinmaz.ada = String(value);
+          } else if (normalizedHeader.includes('parsel')) {
+            tasinmaz.parsel = String(value);
+          } else if (normalizedHeader.includes('adres')) {
+            tasinmaz.adres = String(value);
+          } else if (normalizedHeader.includes('koordinat')) {
+            tasinmaz.koordinat = String(value);
+          } else if (normalizedHeader.includes('tasinmaz') || normalizedHeader.includes('tip')) {
+            tasinmaz.tasinmazTipi = String(value);
+          } else if (normalizedHeader.includes('mahalle')) {
+            tasinmaz.mahalleId = Number(value) || null;
+          }
+        }
+      });
+
+      // Gerekli alanları kontrol et
+      if (!tasinmaz.ada || !tasinmaz.parsel || !tasinmaz.adres) {
+        console.log('⚠️ Eksik gerekli alanlar, satır atlanıyor');
+        return null;
+      }
+
+      return tasinmaz;
+    } catch (error) {
+      console.error('❌ Satır parse hatası:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Import edilen taşınmazları veritabanına ekler
+   */
+  private async addImportedTasinmazlar(tasinmazlar: any[]): Promise<void> {
+    console.log('💾 Import edilen taşınmazlar kaydediliyor...');
+    
+    this.loading = true;
+    this.error = null;
+
+    try {
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const tasinmaz of tasinmazlar) {
+        try {
+          // Backend'e gönder
+          await firstValueFrom(this.tasinmazService.addTasinmaz(tasinmaz));
+          successCount++;
+          console.log('✅ Taşınmaz eklendi:', tasinmaz.ada, tasinmaz.parsel);
+        } catch (error) {
+          errorCount++;
+          console.error('❌ Taşınmaz eklenirken hata:', error);
+        }
+      }
+
+      console.log(`✅ Import tamamlandı: ${successCount} başarılı, ${errorCount} hatalı`);
+      
+      if (successCount > 0) {
+        this.successMessage = `${successCount} adet taşınmaz başarıyla eklendi`;
+        // Listeyi yenile
+        this.getTasinmazlar();
+        
+        // 5 saniye sonra success message'ı temizle
+        setTimeout(() => {
+          this.successMessage = null;
+        }, 5000);
+      }
+      
+      if (errorCount > 0) {
+        this.error = `${errorCount} adet taşınmaz eklenirken hata oluştu`;
+        // 5 saniye sonra error message'ı temizle
+        setTimeout(() => {
+          this.error = null;
+        }, 5000);
+      }
+
+    } catch (error) {
+      console.error('❌ Toplu ekleme hatası:', error);
+      this.error = 'Taşınmazlar eklenirken hata oluştu: ' + (error as any).message;
+      // 5 saniye sonra error message'ı temizle
+      setTimeout(() => {
+        this.error = null;
+      }, 5000);
+    } finally {
+      this.loading = false;
+    }
   }
 
   // Navigasyon metodları

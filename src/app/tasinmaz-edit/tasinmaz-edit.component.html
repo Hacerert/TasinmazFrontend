@@ -91,6 +91,14 @@
           <div *ngIf="tasinmazForm.get('tasinmazTipi')?.invalid && tasinmazForm.get('tasinmazTipi')?.touched" class="error-msg">
             Taşınmaz tipi seçimi zorunludur.
           </div>
+          <!-- Debug: Mevcut değeri göster -->
+          <small style="color: #666; font-size: 12px;">
+            Debug: Seçili değer: {{ tasinmazForm.get('tasinmazTipi')?.value || 'Boş' }}
+          </small>
+          <!-- Test butonu -->
+          <button type="button" (click)="testSetPropertyType()" style="margin-top: 5px; padding: 2px 8px; font-size: 11px; background: #3b82f6; color: white; border: none; border-radius: 4px;">
+            Test: Arsa Set Et
+          </button>
         </div>
       </div>
 

@@ -126,6 +126,11 @@
         {{ error }}
       </div>
 
+      <!-- Başarı Mesajı -->
+      <div *ngIf="successMessage" class="success-msg">
+        {{ successMessage }}
+      </div>
+
       <button type="submit" [disabled]="tasinmazForm.invalid || loading" class="tasinmaz-add-btn">
         <span *ngIf="loading" class="spinner-border"></span>
         <span *ngIf="!loading">Taşınmaz Ekle</span>

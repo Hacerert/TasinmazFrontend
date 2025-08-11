@@ -92,6 +92,10 @@
         {{ error }}
       </div>
 
+      <div *ngIf="successMessage" class="success-msg">
+        {{ successMessage }}
+      </div>
+
       <button type="submit" [disabled]="userForm.invalid || loading" class="user-add-btn">
         <span *ngIf="loading" class="spinner-border"></span>
         <span *ngIf="!loading">Kullanıcı Ekle</span>

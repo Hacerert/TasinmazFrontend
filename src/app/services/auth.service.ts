@@ -110,7 +110,7 @@ export class AuthService {
     return this.userIdSubject.value;
   }
 
-  private decodeTokenAndSetClaims(token: string): void {
+  public decodeTokenAndSetClaims(token: string): void {
     try {
       const decodedToken = this.jwtHelper.decodeToken(token);
       console.log('🔍 Decoded JWT Token:', decodedToken);

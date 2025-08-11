@@ -34,6 +34,7 @@ export class TasinmazAddComponent implements OnInit, AfterViewInit, OnDestroy {
   mahalleler: any[] = [];
   tasinmazTipleri: string[] = ['Arsa', 'Arazi', 'Bina', 'Konut', 'Daire'];
   error: string | null = null;
+  successMessage: string | null = null;
   loading: boolean = false;
 
   // OpenLayers properties
@@ -158,22 +159,71 @@ export class TasinmazAddComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onSubmit(): void {
+    console.log('🚀 onSubmit başlatıldı');
+    
+    // Önceki mesajları temizle
+    this.error = null;
+    this.successMessage = null;
+    
     if (this.tasinmazForm.invalid) {
       this.tasinmazForm.markAllAsTouched();
       this.error = 'Lütfen tüm alanları doğru şekilde doldurunuz.';
+      
+      // 5 saniye sonra error message'ı temizle
+      setTimeout(() => {
+        this.error = null;
+      }, 5000);
       return;
     }
 
     this.loading = true;
     this.error = null;
 
-    const userId = this.authService.getUserId();
-    if (!userId) {
-      this.error = 'Kullanıcı oturumu bulunamadı. Lütfen tekrar giriş yapın.';
+    // Check if user is logged in first
+    console.log('🔍 Kullanıcı giriş durumu kontrol ediliyor...');
+    const isLoggedIn = this.authService.isLoggedIn();
+    console.log('🔍 isLoggedIn:', isLoggedIn);
+    
+    if (!isLoggedIn) {
+      console.log('❌ Kullanıcı giriş yapmamış, login sayfasına yönlendiriliyor');
+      this.error = 'Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.';
       this.loading = false;
       this.router.navigate(['/login']);
       return;
     }
+
+    let userId = this.authService.getUserId();
+    console.log('🔍 İlk userId kontrolü:', userId);
+    
+    if (!userId) {
+      console.log('⚠️ userId bulunamadı, token yeniden decode ediliyor...');
+      // If logged in but no userId, try to decode token again
+      const token = this.authService.getToken();
+      console.log('🔍 Token alındı:', token ? 'Var' : 'Yok');
+      
+      if (token) {
+        // Force token decode
+        this.authService.decodeTokenAndSetClaims(token);
+        // Try to get userId again
+        userId = this.authService.getUserId();
+        console.log('🔍 Token decode sonrası userId:', userId);
+      }
+      
+      if (!userId) {
+        console.log('❌ userId hala bulunamadı, login sayfasına yönlendiriliyor');
+        this.error = 'Kullanıcı bilgileri alınamadı. Lütfen tekrar giriş yapın.';
+        this.loading = false;
+        this.router.navigate(['/login']);
+        return;
+      }
+    }
+
+    console.log('✅ userId bulundu, property ekleme işlemi başlatılıyor:', userId);
+    this.submitTasinmaz(userId);
+  }
+
+  private submitTasinmaz(userId: string): void {
+    console.log('📝 submitTasinmaz başlatıldı, userId:', userId);
 
     const newTasinmaz: TasinmazAddRequest = {
       ilId: this.tasinmazForm.get('il')?.value,
@@ -187,17 +237,34 @@ export class TasinmazAddComponent implements OnInit, AfterViewInit, OnDestroy {
       userId: userId
     };
 
+    console.log('📝 Gönderilecek veri:', newTasinmaz);
+
     this.tasinmazService.addTasinmaz(newTasinmaz).subscribe({
       next: (response) => {
-        console.log('Taşınmaz başarıyla eklendi:', response);
-        alert('Taşınmaz başarıyla eklendi!');
+        console.log('✅ Taşınmaz başarıyla eklendi:', response);
+        this.successMessage = 'Taşınmaz başarıyla eklendi!';
         this.loading = false;
-        this.router.navigate(['/tasinmazlarim']);
+        
+        // 1.5 saniye sonra success message'ı temizle
+        setTimeout(() => {
+          this.successMessage = null;
+        }, 1500);
+        
+        // 2 saniye sonra yönlendir
+        setTimeout(() => {
+          console.log('🔄 /tasinmazlar sayfasına yönlendiriliyor...');
+          this.router.navigate(['/tasinmazlar']);
+        }, 2000);
       },
       error: (err) => {
-        console.error('Taşınmaz eklenirken bir hata oluştu:', err);
+        console.error('❌ Taşınmaz eklenirken bir hata oluştu:', err);
         this.loading = false;
         this.error = 'Taşınmaz eklenirken bir hata oluştu: ' + (err.error?.message || err.message);
+        
+        // 5 saniye sonra error message'ı temizle
+        setTimeout(() => {
+          this.error = null;
+        }, 5000);
       }
     });
   }

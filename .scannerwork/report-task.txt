@@ -1,0 +1,6 @@
+projectKey=tasinmazfront
+serverUrl=http://localhost:9000
+serverVersion=25.7.0.110598
+dashboardUrl=http://localhost:9000/dashboard?id=tasinmazfront
+ceTaskId=2f09c9a3-0c0c-434e-9b38-41c734b09fba
+ceTaskUrl=http://localhost:9000/api/ce/task?id=2f09c9a3-0c0c-434e-9b38-41c734b09fba

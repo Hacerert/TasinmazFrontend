@@ -26,8 +26,6 @@
           <option *ngFor="let status of availableStatuses" [value]="status">{{ status }}</option>
         </select>
         
-        <input [(ngModel)]="filterIpAddress" placeholder="IP" class="compact-input">
-        <input [(ngModel)]="filterStartDate" type="date" class="compact-input">
         <input [(ngModel)]="filterUserId" placeholder="Kullanıcı" class="compact-input">
         
         <button (click)="applyFilters()" class="btn btn-sm btn-blue">🔍</button>

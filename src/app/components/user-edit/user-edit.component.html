@@ -70,6 +70,10 @@
         {{ error }}
       </div>
 
+      <div *ngIf="successMessage" class="success-msg">
+        {{ successMessage }}
+      </div>
+
       <button type="submit" [disabled]="userForm.invalid || loading" class="user-edit-btn">
         <span *ngIf="loading" class="spinner-border"></span>
         <span *ngIf="!loading">{{ isNewUser ? 'Kullanıcı Ekle' : 'Değişiklikleri Kaydet' }}</span>

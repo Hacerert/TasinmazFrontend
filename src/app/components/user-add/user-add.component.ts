@@ -12,6 +12,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 export class UserAddComponent implements OnInit {
   userForm: FormGroup;
   error: string | null = null;
+  successMessage: string | null = null;
   loading: boolean = false;
   roles: string[] = ['Admin', 'User'];
 
@@ -51,14 +52,22 @@ export class UserAddComponent implements OnInit {
   }
 
   onSubmit(): void {
+    // Önceki mesajları temizle
+    this.error = null;
+    this.successMessage = null;
+    
     if (this.userForm.invalid) {
       this.error = 'Lütfen tüm alanları doğru şekilde doldurun.';
       this.userForm.markAllAsTouched();
+      
+      // 5 saniye sonra error message'ı temizle
+      setTimeout(() => {
+        this.error = null;
+      }, 5000);
       return;
     }
 
     this.loading = true;
-    this.error = null;
 
     const userData = {
       Username: this.userForm.value.username,  // Backend RegisterUserDto'da Username bekliyor
@@ -69,13 +78,23 @@ export class UserAddComponent implements OnInit {
 
     this.authService.register(userData).subscribe({
       next: (response) => {
-        alert('Kullanıcı başarıyla eklendi!');
-        this.router.navigate(['/admin-dashboard']);
+        this.successMessage = 'Kullanıcı başarıyla eklendi!';
+        this.loading = false;
+        
+        // 2 saniye sonra yönlendir
+        setTimeout(() => {
+          this.router.navigate(['/admin-dashboard']);
+        }, 2000);
       },
       error: (err) => {
         console.error('Kullanıcı eklenirken hata oluştu:', err);
         this.error = 'Kullanıcı eklenirken bir hata oluştu: ' + (err.error?.message || err.message);
         this.loading = false;
+        
+        // 5 saniye sonra error message'ı temizle
+        setTimeout(() => {
+          this.error = null;
+        }, 5000);
       }
     });
   }

@@ -47,9 +47,6 @@ export class LogListComponent implements OnInit, OnDestroy {
   filterUserId: string = '';
   filterStatus: string = '';
   filterActionType: string = '';
-  filterIpAddress: string = '';
-  filterStartDate: string = '';
-  filterEndDate: string = '';
 
   // Filtre seçenekleri için diziler
   availableStatuses: string[] = [];
@@ -163,10 +160,7 @@ export class LogListComponent implements OnInit, OnDestroy {
     console.log('Aktif filtre değerleri:', {
       userId: this.filterUserId,
       status: this.filterStatus,
-      actionType: this.filterActionType,
-      ipAddress: this.filterIpAddress,
-      startDate: this.filterStartDate,
-      endDate: this.filterEndDate
+      actionType: this.filterActionType
     });
 
     let tempLogs = [...this.logs]; // Her zaman orijinal log listesinden başla
@@ -195,34 +189,6 @@ export class LogListComponent implements OnInit, OnDestroy {
       console.log('İşlem Türü filtresi uygulandı. Kalan log sayısı:', tempLogs.length);
     }
 
-    // IP Adresi Filtresi
-    if (this.filterIpAddress) {
-      tempLogs = tempLogs.filter(log =>
-        log.ipAddress && log.ipAddress.toLowerCase().includes(this.filterIpAddress.toLowerCase())
-      );
-      console.log('IP Adresi filtresi uygulandı. Kalan log sayısı:', tempLogs.length);
-    }
-
-    // Başlangıç Tarihi Filtresi
-    if (this.filterStartDate) {
-      const startDate = new Date(this.filterStartDate);
-      startDate.setHours(0, 0, 0, 0); // Günün başlangıcını ayarla
-      tempLogs = tempLogs.filter(log => {
-        return log.createdAt && log.createdAt instanceof Date && log.createdAt >= startDate;
-      });
-      console.log('Başlangıç Tarihi filtresi uygulandı. Kalan log sayısı:', tempLogs.length);
-    }
-
-    // Bitiş Tarihi Filtresi
-    if (this.filterEndDate) {
-      const endDate = new Date(this.filterEndDate);
-      endDate.setHours(23, 59, 59, 999); // Günün sonunu ayarla
-      tempLogs = tempLogs.filter(log => {
-        return log.createdAt && log.createdAt instanceof Date && log.createdAt <= endDate;
-      });
-      console.log('Bitiş Tarihi filtresi uygulandı. Kalan log sayısı:', tempLogs.length);
-    }
-
     this.filteredLogs = tempLogs;
     console.log('Filtreleme işlemi tamamlandı. Son filtrelenmiş log sayısı:', this.filteredLogs.length);
     this.currentPage = 1; // Filtreler uygulandığında sayfayı sıfırla
@@ -232,9 +198,6 @@ export class LogListComponent implements OnInit, OnDestroy {
     this.filterUserId = '';
     this.filterStatus = '';
     this.filterActionType = '';
-    this.filterIpAddress = '';
-    this.filterStartDate = '';
-    this.filterEndDate = '';
     this.applyFilters(); // Filtreleri temizledikten sonra yeniden uygula
     console.log('Filtreler temizlendi.');
   }

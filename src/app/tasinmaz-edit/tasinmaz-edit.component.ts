@@ -52,6 +52,10 @@ export class TasinmazEditComponent implements OnInit, AfterViewInit, OnDestroy {
   selectedPhotoFile: File | null = null;
   photoPreview: string | null = null;
   photoError: string | null = null;
+  
+  // Polygon yükleme queue
+  pendingPolygonCoordinates: string | null = null;
+  mapInitialized: boolean = false;
 
   constructor(
     private fb: FormBuilder, 
@@ -79,6 +83,19 @@ export class TasinmazEditComponent implements OnInit, AfterViewInit, OnDestroy {
     setTimeout(() => {
       this.initMap();
     }, 1000); // Daha uzun süre bekle
+    
+    // Form değerlerini tekrar kontrol et (timing issue olabilir)
+    setTimeout(() => {
+      this.checkAndFixFormValues();
+    }, 2000);
+    
+    // Harita hazır olduktan sonra polygon'ı tekrar yüklemeyi dene
+    setTimeout(() => {
+      if (this.mapInitialized && this.pendingPolygonCoordinates) {
+        console.log('🔄 ngAfterViewInit: Bekleyen polygon yükleniyor');
+        this.loadExistingPolygon(this.pendingPolygonCoordinates);
+      }
+    }, 3000);
   }
 
   ngOnDestroy(): void {
@@ -129,14 +146,40 @@ export class TasinmazEditComponent implements OnInit, AfterViewInit, OnDestroy {
         console.log('🎯 Bulunan taşınmaz:', tasinmaz);
         
         if (tasinmaz) {
+          // Debug: Tüm backend verisini logla
+          console.log('🔍 Backend\'den gelen tam veri:', tasinmaz);
+          console.log('🔍 Backend\'de mevcut alanlar:', Object.keys(tasinmaz));
+          
+          // Property type'ı bul - farklı field name'leri dene
+          let propertyType = '';
+          if (tasinmaz.tasinmazTipi) {
+            propertyType = tasinmaz.tasinmazTipi;
+          } else if (tasinmaz.tip) {
+            propertyType = tasinmaz.tip;
+          } else if (tasinmaz.propertyType) {
+            propertyType = tasinmaz.propertyType;
+          } else if (tasinmaz.type) {
+            propertyType = tasinmaz.type;
+          } else if (tasinmaz.tasinmazTip) {
+            propertyType = tasinmaz.tasinmazTip;
+          }
+          
+          console.log('🔍 Bulunan property type:', propertyType);
+          
           // Önce temel form değerlerini set et
           this.tasinmazForm.patchValue({
             ada: tasinmaz.ada,
             parsel: tasinmaz.parsel,
             adres: tasinmaz.adres,
             koordinat: tasinmaz.koordinat,
-            tasinmazTipi: tasinmaz.tasinmazTipi || ''
+            tasinmazTipi: propertyType
           });
+          
+          console.log('🔍 İlk form değerleri set edildi:', this.tasinmazForm.value);
+          console.log('🔍 tasinmazTipi (ilk set):', this.tasinmazForm.get('tasinmazTipi')?.value);
+          console.log('🔍 Backend\'den gelen tasinmazTipi:', tasinmaz.tasinmazTipi);
+          console.log('🔍 Backend\'den gelen tip:', tasinmaz.tip);
+          console.log('🔍 Form\'un mevcut değerleri:', this.tasinmazForm.value);
 
           // Eğer nested lokasyon bilgileri varsa kullan
           if (tasinmaz.mahalle && tasinmaz.mahalle.ilce && tasinmaz.mahalle.ilce.il) {
@@ -147,7 +190,7 @@ export class TasinmazEditComponent implements OnInit, AfterViewInit, OnDestroy {
             console.log('📍 Nested lokasyon bilgileri bulundu:', {
               il: { id: ilId, ad: tasinmaz.mahalle.ilce.il.ad },
               ilce: { id: ilceId, ad: tasinmaz.mahalle.ilce.ad },
-              mahalle: { id: mahalleId, ad: tasinmaz.mahalle.ad }
+              mahalle: { id: mahalleId, ad: tasinmaz.mahalle.id }
             });
 
             // İlçeleri yükle
@@ -157,6 +200,11 @@ export class TasinmazEditComponent implements OnInit, AfterViewInit, OnDestroy {
             console.log('⚠️ Nested lokasyon bilgileri yok, sadece mahalle ID kullanılıyor:', tasinmaz.mahalleId);
             this.loadLocationByMahalleId(tasinmaz.mahalleId, tasinmaz);
           }
+          
+          // Property type'ı tekrar set et (timing issue olabilir)
+          setTimeout(() => {
+            this.forceSetPropertyType(tasinmaz);
+          }, 500);
         } else {
           console.error('❌ Taşınmaz bulunamadı');
           this.error = 'Taşınmaz bulunamadı!';
@@ -211,10 +259,17 @@ export class TasinmazEditComponent implements OnInit, AfterViewInit, OnDestroy {
           parsel: tasinmaz.parsel,
           adres: tasinmaz.adres,
           koordinat: tasinmaz.koordinat,
-          tasinmazTipi: tasinmaz.tasinmazTipi || ''
+          tasinmazTipi: tasinmaz.tasinmazTipi || tasinmaz.tip || ''
         });
         
         console.log('✅ Form değerleri set edildi, current form value:', this.tasinmazForm.value);
+        console.log('🔍 tasinmazTipi son kontrol:', this.tasinmazForm.get('tasinmazTipi')?.value);
+        
+        // Property type'ı tekrar set et (timing issue olabilir)
+        setTimeout(() => {
+          this.forceSetPropertyType(tasinmaz);
+        }, 100);
+        
         this.loading = false;
         
         // Mevcut koordinatları haritada göster
@@ -296,15 +351,28 @@ export class TasinmazEditComponent implements OnInit, AfterViewInit, OnDestroy {
           next: (mahalleler: any) => {
             this.mahalleler = mahalleler;
             
-            // Form değerlerini set et
+            // Form değerlerini set et - tüm property bilgilerini koru
             this.tasinmazForm.patchValue({
               il: ilId,
               ilce: ilceId,
-              mahalle: mahalleId
+              mahalle: mahalleId,
+              ada: tasinmaz.ada,
+              parsel: tasinmaz.parsel,
+              adres: tasinmaz.adres,
+              koordinat: tasinmaz.koordinat,
+              tasinmazTipi: tasinmaz.tasinmazTipi || ''
             });
             
             console.log('✅ Tüm lokasyon bilgileri yüklendi ve form set edildi');
+            console.log('🔍 Form değerleri (loadDropdownsAndSetValues):', this.tasinmazForm.value);
+            console.log('🔍 tasinmazTipi değeri:', this.tasinmazForm.get('tasinmazTipi')?.value);
             this.loading = false;
+            
+            // Final form state kontrolü
+            setTimeout(() => {
+              console.log('🔍 Final form state:', this.tasinmazForm.value);
+              console.log('🔍 Final tasinmazTipi:', this.tasinmazForm.get('tasinmazTipi')?.value);
+            }, 100);
             
             // Mevcut koordinatları haritada göster
             if (tasinmaz.koordinat) {
@@ -323,8 +391,17 @@ export class TasinmazEditComponent implements OnInit, AfterViewInit, OnDestroy {
   private setFormWithoutLocation(tasinmaz: any, mahalleId: number): void {
     console.log('⚠️ Lokasyon bilgileri yüklenemedi, sadece mahalle ID kullanılıyor');
     this.tasinmazForm.patchValue({
-      mahalle: mahalleId
+      mahalle: mahalleId,
+      ada: tasinmaz.ada,
+      parsel: tasinmaz.parsel,
+      adres: tasinmaz.adres,
+      koordinat: tasinmaz.koordinat,
+      tasinmazTipi: tasinmaz.tasinmazTipi || ''
     });
+    
+    console.log('🔍 setFormWithoutLocation - Form değerleri:', this.tasinmazForm.value);
+    console.log('🔍 setFormWithoutLocation - tasinmazTipi:', this.tasinmazForm.get('tasinmazTipi')?.value);
+    
     this.loading = false;
     
     // Mevcut koordinatları haritada göster
@@ -342,8 +419,11 @@ export class TasinmazEditComponent implements OnInit, AfterViewInit, OnDestroy {
         next: (data: any) => {
           this.ilceler = data;
           this.mahalleler = [];
-          this.tasinmazForm.get('ilce')?.setValue('');
-          this.tasinmazForm.get('mahalle')?.setValue('');
+          // Sadece lokasyon alanlarını temizle, property bilgilerini koru
+          this.tasinmazForm.patchValue({
+            ilce: '',
+            mahalle: ''
+          });
         },
         error: (err: any) => {
           console.error('İlçeler alınırken hata:', err);
@@ -366,7 +446,10 @@ export class TasinmazEditComponent implements OnInit, AfterViewInit, OnDestroy {
       this.locationService.getMahalleler(ilceId).subscribe({
         next: (data: any) => {
           this.mahalleler = data;
-          this.tasinmazForm.get('mahalle')?.setValue('');
+          // Sadece mahalle alanını temizle, property bilgilerini koru
+          this.tasinmazForm.patchValue({
+            mahalle: ''
+          });
         },
         error: (err: any) => {
           console.error('Mahalleler alınırken hata:', err);
@@ -521,12 +604,25 @@ export class TasinmazEditComponent implements OnInit, AfterViewInit, OnDestroy {
       });
 
       console.log('✅ Harita başarıyla initialize edildi');
+      
+      // Harita hazır olduğunu işaretle
+      this.mapInitialized = true;
+      
+      // Eğer bekleyen polygon varsa yükle
+      if (this.pendingPolygonCoordinates) {
+        console.log('🔄 Bekleyen polygon yükleniyor:', this.pendingPolygonCoordinates);
+        this.loadExistingPolygon(this.pendingPolygonCoordinates);
+        this.pendingPolygonCoordinates = null;
+      }
+      
     } catch (error) {
       console.error('❌ Harita initialize edilirken hata:', error);
     }
   }
 
   startDrawing(): void {
+    console.log('✏️ Polygon çizimi başlatılıyor...');
+    
     // Önceki çizimi temizle
     this.clearDrawing();
 
@@ -548,13 +644,17 @@ export class TasinmazEditComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.map.addInteraction(this.drawInteraction);
     this.isDrawing = true;
+    console.log('✏️ Draw interaction eklendi, çizim başladı');
 
     // Çizim bittiğinde
     this.drawInteraction.on('drawend', (event) => {
+      console.log('✅ Polygon çizimi tamamlandı');
       this.currentPolygon = event.feature;
       this.hasPolygon = true;
       this.map.removeInteraction(this.drawInteraction);
       this.isDrawing = false;
+      
+      console.log('✅ Draw interaction kaldırıldı');
       
       // Koordinatları güncelle
       this.updatePolygonCoordinates();
@@ -562,20 +662,30 @@ export class TasinmazEditComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   clearDrawing(): void {
+    console.log('🗑️ Polygon temizleniyor...');
+    
     // Vector source'u temizle
+    if (this.vectorSource) {
     this.vectorSource.clear();
+      console.log('🗑️ Vector source temizlendi');
+    }
+    
     this.hasPolygon = false;
     this.polygonArea = 0;
     this.currentPolygon = null;
     
     // Form alanını temizle
     this.tasinmazForm.get('koordinat')?.setValue('');
+    console.log('🗑️ Form koordinat alanı temizlendi');
     
     // Draw interaction'ı kaldır
     if (this.drawInteraction) {
       this.map.removeInteraction(this.drawInteraction);
       this.isDrawing = false;
+      console.log('🗑️ Draw interaction kaldırıldı');
     }
+    
+    console.log('✅ Polygon başarıyla temizlendi');
   }
 
   updatePolygonCoordinates(): void {
@@ -607,47 +717,160 @@ export class TasinmazEditComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // Mevcut koordinatları haritada göster
   loadExistingPolygon(koordinatString: string): void {
-    if (!koordinatString || !this.map) return;
+    console.log('🗺️ loadExistingPolygon çağrıldı, koordinat:', koordinatString);
+    
+    if (!koordinatString) {
+      console.log('⚠️ Koordinat string boş, polygon yüklenmiyor');
+      return;
+    }
+    
+    if (!this.map || !this.mapInitialized) {
+      console.log('⚠️ Harita henüz initialize edilmemiş, polygon queue\'ya ekleniyor');
+      this.pendingPolygonCoordinates = koordinatString;
+      return;
+    }
 
     try {
+      console.log('🔍 Koordinat parse ediliyor...');
+      
       // Koordinat string'ini parse et
       const coordPairs = koordinatString.split(';');
+      console.log('🔍 Koordinat çiftleri:', coordPairs);
+      
+      if (coordPairs.length < 3) {
+        console.log('⚠️ En az 3 koordinat gerekli, mevcut:', coordPairs.length);
+        return;
+      }
+      
       const coordinates = coordPairs.map(pair => {
         const [lat, lng] = pair.split(',').map(Number);
+        console.log(`🔍 Parse edilen: ${pair} -> lat: ${lat}, lng: ${lng}`);
         return [lng, lat]; // OpenLayers [lng, lat] formatı kullanır
       });
+      
+      console.log('🔍 Parse edilen koordinatlar:', coordinates);
 
       // İlk ve son koordinat aynı değilse, son koordinatı ekle (polygon kapatmak için)
       if (coordinates[0][0] !== coordinates[coordinates.length - 1][0] || 
           coordinates[0][1] !== coordinates[coordinates.length - 1][1]) {
         coordinates.push(coordinates[0]);
+        console.log('🔍 Polygon kapatıldı, son koordinat eklendi');
       }
 
       // WGS84'ten Web Mercator'a dönüştür
       const transformedCoords = coordinates.map(coord => 
         transform(coord, 'EPSG:4326', 'EPSG:3857')
       );
+      
+      console.log('🔍 Dönüştürülen koordinatlar:', transformedCoords);
 
       // Polygon geometry oluştur
       const polygon = new Polygon([transformedCoords]);
+      console.log('🔍 Polygon geometry oluşturuldu');
       
       // Feature oluştur
       const feature = new Feature(polygon);
+      console.log('🔍 Feature oluşturuldu');
       
-      // Vector source'a ekle
+      // Vector source'u temizle ve yeni feature ekle
+      this.vectorSource.clear();
       this.vectorSource.addFeature(feature);
       this.currentPolygon = feature;
       this.hasPolygon = true;
       
+      console.log('🔍 Feature vector source\'a eklendi');
+      
       // Alanı hesapla
       this.calculateArea();
+      console.log('🔍 Alan hesaplandı:', this.polygonArea);
       
       // Harita görünümünü poligona fit et
       this.map.getView().fit(polygon, { padding: [50, 50, 50, 50] });
       
-      console.log('✅ Mevcut poligon haritada gösterildi');
-    } catch (error) {
+      console.log('✅ Mevcut poligon haritada başarıyla gösterildi');
+      console.log('✅ Polygon bilgileri:', {
+        hasPolygon: this.hasPolygon,
+        currentPolygon: this.currentPolygon ? 'Var' : 'Yok',
+        polygonArea: this.polygonArea
+      });
+      
+    } catch (error: any) {
       console.error('❌ Koordinat parse edilemedi:', error);
+      console.error('❌ Hata detayı:', error.message);
+      console.error('❌ Stack trace:', error.stack);
     }
+  }
+
+       // Property type'ı zorla set et
+    private forceSetPropertyType(tasinmaz: any): void {
+      console.log('🔧 Property type zorla set ediliyor...');
+      console.log('🔧 Backend verisi:', tasinmaz);
+      
+      // Farklı field name'leri dene
+      let propertyType = '';
+      if (tasinmaz.tasinmazTipi) {
+        propertyType = tasinmaz.tasinmazTipi;
+      } else if (tasinmaz.tip) {
+        propertyType = tasinmaz.tip;
+      } else if (tasinmaz.propertyType) {
+        propertyType = tasinmaz.propertyType;
+      } else if (tasinmaz.type) {
+        propertyType = tasinmaz.type;
+      } else if (tasinmaz.tasinmazTip) {
+        propertyType = tasinmaz.tasinmazTip;
+      }
+      
+      console.log('🔧 Bulunan property type:', propertyType);
+      
+      if (propertyType) {
+        this.tasinmazForm.patchValue({
+          tasinmazTipi: propertyType
+        });
+        
+        console.log('🔧 Property type set edildi:', this.tasinmazForm.get('tasinmazTipi')?.value);
+        console.log('🔧 Form değerleri:', this.tasinmazForm.value);
+      } else {
+        console.log('⚠️ Property type bulunamadı, varsayılan değer set ediliyor...');
+        // Varsayılan değer set et
+        this.tasinmazForm.patchValue({
+          tasinmazTipi: 'Arsa'
+        });
+        console.log('🔧 Varsayılan property type set edildi:', this.tasinmazForm.get('tasinmazTipi')?.value);
+      }
+      
+      // Form'u yeniden render et
+      this.tasinmazForm.updateValueAndValidity();
+    }
+
+       // Form değerlerini kontrol et ve düzelt
+    private checkAndFixFormValues(): void {
+      console.log('🔍 Form değerleri kontrol ediliyor...');
+      console.log('🔍 Mevcut form değerleri:', this.tasinmazForm.value);
+      
+      // Property type kontrol et
+      const currentPropertyType = this.tasinmazForm.get('tasinmazTipi')?.value;
+      console.log('🔍 Mevcut property type:', currentPropertyType);
+      
+      if (!currentPropertyType && this.tasinmazId) {
+        console.log('⚠️ Property type boş, backend\'den tekrar yükleniyor...');
+        // Backend'den tekrar yükle
+        this.loadTasinmaz();
+      }
+    }
+
+    // Test method - property type'ı manuel olarak set et
+    testSetPropertyType(): void {
+      console.log('🧪 Test: Property type manuel olarak set ediliyor...');
+      console.log('🧪 Form mevcut durumu:', this.tasinmazForm.value);
+      
+      this.tasinmazForm.patchValue({
+        tasinmazTipi: 'Arsa'
+      });
+      
+      console.log('🧪 Form güncellenmiş durumu:', this.tasinmazForm.value);
+      console.log('🧪 tasinmazTipi değeri:', this.tasinmazForm.get('tasinmazTipi')?.value);
+      
+      // Form'u yeniden render et
+      this.tasinmazForm.updateValueAndValidity();
   }
 }

@@ -16,6 +16,7 @@ export class UserEditComponent implements OnInit {
   userId: number | null = null;
   isNewUser: boolean = false;
   error: string | null = null;
+  successMessage: string | null = null;
   loading: boolean = true;
   roles: string[] = ['Admin', 'User'];
 
@@ -88,39 +89,68 @@ export class UserEditComponent implements OnInit {
   }
 
   onSubmit(): void {
+    // Önceki mesajları temizle
+    this.error = null;
+    this.successMessage = null;
+    
     if (this.userForm.invalid) {
       this.error = 'Lütfen tüm alanları doğru şekilde doldurun.';
       this.userForm.markAllAsTouched();
+      
+      // 5 saniye sonra error message'ı temizle
+      setTimeout(() => {
+        this.error = null;
+      }, 5000);
       return;
     }
 
     this.loading = true;
-    this.error = null;
 
     const userData = this.userForm.value;
 
     if (this.isNewUser) {
       this.authService.register(userData).subscribe({
         next: (response) => {
-          alert('Kullanıcı başarıyla eklendi!');
-          this.router.navigate(['/admin-dashboard']);
+          this.successMessage = 'Kullanıcı başarıyla eklendi!';
+          this.loading = false;
+          
+          // 2 saniye sonra yönlendir
+          setTimeout(() => {
+            this.router.navigate(['/admin-dashboard']);
+          }, 2000);
         },
         error: (err) => {
           console.error('Kullanıcı eklenirken hata oluştu:', err);
           this.error = 'Kullanıcı eklenirken bir hata oluştu: ' + (err.error?.message || err.message);
           this.loading = false;
+          
+          // 5 saniye sonra error message'ı temizle
+          setTimeout(() => {
+            this.error = null;
+          }, 5000);
         }
       });
     } else {
       this.userService.updateUser(this.userId!, userData).subscribe({
         next: () => {
-          alert('Kullanıcı başarıyla güncellendi!');
-          this.router.navigate(['/admin-dashboard']);
+          this.successMessage = 'Kullanıcı başarıyla güncellendi!';
+          this.loading = false;
+          
+          // 2 saniye sonra yönlendir
+          setTimeout(() => {
+            this.router.navigate(['/admin-dashboard']);
+          }, 2000);
         },
         error: (err) => {
           console.error('Kullanıcı güncellenirken hata oluştu:', err);
           this.error = 'Kullanıcı güncellenirken bir hata oluştu: ' + (err.error?.message || err.message);
           this.loading = false;
+          
+          // 5 saniye sonra error message'ı temizle
+          setTimeout(() => {
+            this.error = null;
+          }, 5000);
+          
           if (err.status === 401 || err.status === 403) {
             this.authService.logout();
             this.router.navigate(['/login']);

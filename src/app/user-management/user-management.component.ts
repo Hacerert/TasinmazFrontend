@@ -25,6 +25,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   filteredUsers: User[] = []; // Filtrelenmiş kullanıcılar
   loading: boolean = true;
   error: string | null = null;
+  successMessage: string | null = null;
   selectedUserIds: number[] = [];
   private userRoleSubscription: Subscription | undefined;
 
@@ -109,8 +110,13 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     if (confirm('Bu kullanıcıyı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) {
       this.userService.deleteUser(userId).subscribe({
         next: () => {
-          alert('Kullanıcı başarıyla silindi.');
+          this.successMessage = 'Kullanıcı başarıyla silindi.';
           this.loadUsers();
+          
+          // 3 saniye sonra success message'ı temizle
+          setTimeout(() => {
+            this.successMessage = null;
+          }, 3000);
         },
         error: (err: any) => {
           console.error('Kullanıcı silinirken hata oluştu:', err);
@@ -211,12 +217,22 @@ export class UserManagementComponent implements OnInit, OnDestroy {
           if (deletedCount === totalCount) {
             this.selectedUserIds = []; // Seçimleri temizle
             this.loadUsers(); // Listeyi yenile
-            alert(`${deletedCount} kullanıcı başarıyla silindi.`);
+            this.successMessage = `${deletedCount} kullanıcı başarıyla silindi.`;
+            
+            // 3 saniye sonra success message'ı temizle
+            setTimeout(() => {
+              this.successMessage = null;
+            }, 3000);
           }
         },
         error: (err: any) => {
           console.error(`Kullanıcı (ID: ${userId}) silinirken hata:`, err);
           this.error = `Kullanıcı silme işlemi sırasında hata oluştu: ${err.error?.message || err.message}`;
+          
+          // 5 saniye sonra error message'ı temizle
+          setTimeout(() => {
+            this.error = null;
+          }, 5000);
           
           if (err.status === 401 || err.status === 403) {
             this.authService.logout();
